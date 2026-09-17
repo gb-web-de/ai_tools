@@ -11,3 +11,8 @@ rules:
     - Security\TYPO3\Rules\IgnoreValidationOnMutationRule
     - Security\TYPO3\Rules\RawFluidOrEchoXssRule
     - Security\TYPO3\Rules\ExtbaseQuerySettingsDataLeakRule
+    - Security\TYPO3\Rules\InsecureDeserializationRule
+    - Security\TYPO3\Rules\SsrfGeneralUtilityGetUrlRule
+    - Security\TYPO3\Rules\DirectSuperglobalsRule
+    - Security\TYPO3\Rules\InsecureFileOperationRule
+    - Security\TYPO3\Rules\FluidViewHelperEscapingRule

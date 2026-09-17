@@ -1,0 +1,72 @@
+name: TYPO3 AI & Security Suite CI
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  test-suite:
+    name: Build, Static Analysis & Security Audit
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, intl, pdo_sqlite, xml
+          tools: composer
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install NPM Dependencies & Build MCP
+        run: |
+          npm ci
+          npm run build
+
+      - name: Verify AI Sync
+        run: npm run sync-ai
+
+      - name: Install Composer Dependencies
+        run: |
+          cd typo3-security-suite
+          composer install --prefer-dist --no-progress
+
+      - name: 1. PHPStan AST Rules Self-Check
+        run: |
+          cd typo3-security-suite
+          ./vendor/bin/phpstan analyse -c phpstan.neon rules/
+
+      - name: 2. PHPStan Security Scan on Fixtures & SARIF Generation
+        run: |
+          ./typo3-security-suite/vendor/bin/phpstan analyse -c typo3-security-suite/phpstan.neon --error-format=json tests/fixtures/vulnerable_extension/Classes/ > /tmp/phpstan-results.json || true
+          node scripts/phpstan-to-sarif.js /tmp/phpstan-results.json phpstan-results.sarif
+
+      - name: 3. Upload SARIF to GitHub Security Tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: phpstan-results.sarif
+          category: typo3-security-audit
+
+      - name: 4. Fluid XSS Scanner Verification
+        run: |
+          python3 typo3-security-suite/scripts/scan_fluid_xss.py tests/fixtures/vulnerable_extension/Resources/Private/Templates/ || true
