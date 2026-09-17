@@ -1,0 +1,21 @@
+{
+    "name": "security/typo3-security-suite",
+    "description": "Automated Security Audit & Static Code Analysis Suite for TYPO3 Extensions",
+    "type": "library",
+    "require-dev": {
+        "phpstan/phpstan": "^1.10 || ^2.0",
+        "rector/rector": "^0.18 || ^1.0 || ^2.0",
+        "saschaegerer/phpstan-typo3": "^1.8"
+    },
+    "autoload": {
+        "psr-4": {
+            "Security\\TYPO3\\Rules\\": "rules/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "typo3/cms-composer-installers": true,
+            "typo3/class-alias-loader": true
+        }
+    }
+}

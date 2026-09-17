@@ -1,0 +1,26 @@
+name: typo3-security
+description: Directives for security, XSS/SQLi prevention, FAL security, and sanitization in TYPO3 Core.
+version: 1.0.0
+target_framework: TYPO3 v12 / v13 / v14
+rules:
+  - id: prevent-sqli
+    pattern: "Never pass raw concatenated strings into database queries."
+    correct_example: |
+      $queryBuilder = $connectionPool->getQueryBuilderForTable('pages');
+      $result = $queryBuilder
+          ->select('uid', 'title')
+          ->from('pages')
+          ->where($queryBuilder->expr()->eq('pid', $queryBuilder->createNamedParameter($pid, \PDO::PARAM_INT)))
+          ->executeQuery();
+  - id: prevent-xss
+    pattern: "Use default Fluid escaping. Never use f:format.raw() or f:format.html() on untrusted user input."
+    correct_example: |
+      use TYPO3\CMS\Core\Html\SanitizerBuilder;
+      $sanitizer = GeneralUtility::makeInstance(SanitizerBuilder::class)->build();
+      $cleanHtml = $sanitizer->sanitize($userInput);
+  - id: file-uploads
+    pattern: "Always sanitize uploaded filenames and use the FAL API with appropriate file extension restrictions."
+    correct_example: |
+      $GLOBALS['TYPO3_CONF_VARS']['BE']['fileDenyPattern'] = '\\.(php[0-9]?|phar|phtml|cgi|pl|exe)$';
+  - id: password-hashing
+    pattern: "Use TYPO3 PasswordHashFactory. Never hash passwords using plain MD5, SHA1, or custom algorithms."

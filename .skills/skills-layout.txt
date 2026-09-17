@@ -1,0 +1,11 @@
+.
+├── .skills/
+│   ├── 01-typo3-security.yaml
+│   ├── 02-typo3-core-apis.yaml
+│   ├── 03-typo3-extension-architecture.yaml
+│   ├── 04-typo3-php-architecture.yaml
+│   ├── 05-typo3-configuration.yaml
+│   ├── 06-typo3-coding-guidelines.yaml
+│   ├── 07-typo3-testing.yaml
+│   └── 08-typo3-administration.yaml
+└── .cursorrules (oder AGENT.md)

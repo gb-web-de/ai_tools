@@ -1,0 +1,15 @@
+typo3-security-suite/
+├── README.md                      # Ausführliche Anleitung & Dokumentation
+├── composer.json                  # Composer Setup für Security Dependencies
+├── phpstan.neon                   # PHPStan Config inkl. Custom Security Rules
+├── rector.php                     # Rector Configuration für Security & Code Quality
+├── .github/
+│   └── workflows/
+│       └── typo3-security.yml     # Einsatzbereite CI/CD GitHub Action Pipeline
+├── rules/
+│   ├── SqlInjectionQueryBuilderRule.php    # AST-Prüfung auf QueryBuilder SQLi
+│   ├── IgnoreValidationOnMutationRule.php  # Audit für Broken Access Control / Mass Assignment
+│   └── RawFluidOrEchoXssRule.php           # Audit für unsicheres Output Escaping
+└── scripts/
+    ├── scan_fluid_xss.py          # Python Script: Fluid XSS Scanner & Auto-Fixer
+    └── mcp_server.js              # Node.js MCP Server für KI-Agenten & Continuous Learning

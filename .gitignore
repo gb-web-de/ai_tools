@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Build artifacts
+typo3-mcp-server/build/
+dist/
+*.tsbuildinfo
+
+# Temporary & Caches
+.cache/
+.phpunit.cache/
+.phpstan.cache/
+.rector.cache/
+tmp/
+temp/
+
+# Environment & IDE
+.env
+.env.local
+.idea/
+.vscode/*
+!.vscode/mcp.json
+*.swp
+*~
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

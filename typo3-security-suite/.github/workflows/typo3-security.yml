@@ -1,0 +1,49 @@
+name: TYPO3 Security Audit & Code Analysis
+
+on:
+  push:
+    branches: [ "main", "master", "develop" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  security-audit:
+    name: TYPO3 Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, intl, pdo_sqlite, xml
+          tools: composer
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Suite Dependencies
+        run: |
+          cd typo3-security-suite
+          composer install --prefer-dist --no-progress
+
+      - name: 1. Composer Security Audit
+        run: composer audit
+        continue-on-error: true
+
+      - name: 2. PHPStan Security Rules Scan
+        run: |
+          ./typo3-security-suite/vendor/bin/phpstan analyse -c ./typo3-security-suite/phpstan.neon
+
+      - name: 3. Rector Security & Quality Check
+        run: |
+          ./typo3-security-suite/vendor/bin/rector process --config=./typo3-security-suite/rector.php --dry-run
+
+      - name: 4. Fluid Template XSS Audit
+        run: |
+          python3 ./typo3-security-suite/scripts/scan_fluid_xss.py ./public/typo3conf/ext/

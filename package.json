@@ -1,0 +1,31 @@
+{
+  "name": "typo3-ai-suite",
+  "version": "1.0.0",
+  "description": "Universal AI Rules, MCP Server & Security Automation for TYPO3 CMS",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "typo3-mcp-server"
+  ],
+  "scripts": {
+    "sync-ai": "node scripts/sync-ai-configs.js",
+    "setup:project": "node scripts/setup-project.js",
+    "build": "npm run build --workspace=typo3-mcp-server",
+    "test:phpstan": "cd typo3-security-suite && ./vendor/bin/phpstan analyse -c phpstan.neon rules/",
+    "test:fluid": "python3 typo3-security-suite/scripts/scan_fluid_xss.py tests/fixtures/vulnerable_extension/Resources/Private/Templates/",
+    "test": "npm run sync-ai && npm run build && npm run test:phpstan"
+  },
+  "keywords": [
+    "typo3",
+    "mcp",
+    "ai",
+    "security",
+    "phpstan",
+    "cursor",
+    "claude",
+    "windsurf",
+    "copilot"
+  ],
+  "author": "TYPO3 Security & AI Community",
+  "license": "GPL-2.0-or-later"
+}

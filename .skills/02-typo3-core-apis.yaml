@@ -1,0 +1,47 @@
+name: typo3-core-apis
+description: Standards for Doctrine DBAL, Content Elements, FAL, Cache API, Context API, and Mailer.
+version: 1.0.0
+target_framework: TYPO3 v12 / v13 / v14
+rules:
+  - id: doctrine-dbal
+    description: "Always use ConnectionPool and QueryBuilder for database operations."
+    code_pattern: |
+      use TYPO3\CMS\Core\Database\ConnectionPool;
+      use TYPO3\CMS\Core\Utility\GeneralUtility;
+
+      $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('tt_content');
+      $rows = $queryBuilder
+          ->select('*')
+          ->from('tt_content')
+          ->where($queryBuilder->expr()->eq('Ctype', $queryBuilder->createNamedParameter('header')))
+          ->executeQuery()
+          ->fetchAllAssociative();
+
+  - id: fal-resource-api
+    description: "Use ResourceFactory for file handling, storages, and file references."
+    code_pattern: |
+      use TYPO3\CMS\Core\Resource\ResourceFactory;
+
+      $resourceFactory = GeneralUtility::makeInstance(ResourceFactory::class);
+      $file = $resourceFactory->getFileObject($fileUid);
+      $publicUrl = $file->getPublicUrl();
+
+  - id: context-api
+    description: "Read environment state (workspace, language, user login) via Context API instead of $GLOBALS."
+    code_pattern: |
+      use TYPO3\CMS\Core\Context\Context;
+
+      $context = GeneralUtility::makeInstance(Context::class);
+      $languageId = $context->getPropertyFromAspect('language', 'id');
+      $isLoggedIn = $context->getPropertyFromAspect('frontend.user', 'isLoggedIn');
+
+  - id: caching-framework
+    description: "Access caches via CacheManager."
+    code_pattern: |
+      use TYPO3\CMS\Core\Cache\CacheManager;
+
+      $cache = GeneralUtility::makeInstance(CacheManager::class)->getCache('my_extension_cache');
+      if (($data = $cache->get($entryIdentifier)) === false) {
+          $data = $this->calculateData();
+          $cache->set($entryIdentifier, $data, ['my_tag'], 3600);
+      }

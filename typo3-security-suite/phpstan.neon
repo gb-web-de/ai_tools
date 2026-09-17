@@ -1,0 +1,13 @@
+includes:
+    - vendor/saschaegerer/phpstan-typo3/extension.neon
+
+parameters:
+    level: 6
+    paths:
+        - rules/
+
+rules:
+    - Security\TYPO3\Rules\SqlInjectionQueryBuilderRule
+    - Security\TYPO3\Rules\IgnoreValidationOnMutationRule
+    - Security\TYPO3\Rules\RawFluidOrEchoXssRule
+    - Security\TYPO3\Rules\ExtbaseQuerySettingsDataLeakRule

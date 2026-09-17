@@ -1,0 +1,10 @@
+{
+  "name": "test/vulnerable-extension",
+  "type": "typo3-cms-extension",
+  "description": "Intentionally vulnerable TYPO3 extension for AST and security rule testing",
+  "autoload": {
+    "psr-4": {
+      "Test\\VulnerableExtension\\": "Classes/"
+    }
+  }
+}

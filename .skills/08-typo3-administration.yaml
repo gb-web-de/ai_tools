@@ -1,0 +1,32 @@
+name: typo3-administration
+description: Standards for Symfony Commands (CLI), database schema alignment, and maintenance tasks.
+version: 1.0.0
+target_framework: TYPO3 v12 / v13 / v14
+rules:
+  - id: symfony-commands
+    description: "Register CLI tasks as Symfony Console Commands in Configuration/Services.yaml with command tag."
+    code_pattern: |
+      namespace MyVendor\MyExtension\Command;
+
+      use Symfony\Component\Console\Command\Command;
+      use Symfony\Component\Console\Input\InputInterface;
+      use Symfony\Component\Console\Output\OutputInterface;
+      use Symfony\Component\Console\Attribute\AsCommand;
+
+      #[AsCommand(name: 'myext:cleanup', description: 'Cleans up temporary data')]
+      final class CleanupCommand extends Command
+      {
+          protected function execute(InputInterface $input, OutputInterface $output): int
+          {
+              // Execution logic
+              return Command::SUCCESS;
+          }
+      }
+
+  - id: database-migrations
+    description: "Define raw SQL modifications in ext_tables.sql. TYPO3 will automatically compare and align schemas."
+    code_pattern: |
+      CREATE TABLE tx_myext_domain_model_item (
+          title varchar(255) DEFAULT '' NOT NULL,
+          description text,
+      );

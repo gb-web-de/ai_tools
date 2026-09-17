@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "typo3-security": {
+      "command": "node",
+      "args": [
+        "/home/gordon/Projekte/ai_tools/typo3-mcp-server/build/index.js"
+      ]
+    }
+  }
+}

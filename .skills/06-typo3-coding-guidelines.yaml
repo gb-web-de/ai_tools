@@ -1,0 +1,16 @@
+name: typo3-coding-guidelines
+description: Directives for PHP PSR-12/PER Coding Standard, strict typing, and deprecation handling.
+version: 1.0.0
+target_framework: TYPO3 v12 / v13 / v14
+rules:
+  - id: strict-types
+    pattern: "Every PHP file MUST begin with declare(strict_types=1);"
+  - id: php-version
+    pattern: "Use modern PHP 8.2+ features (constructor promotion, readonly properties, typed properties, attributes)."
+  - id: naming-conventions
+    class_names: "PascalCase (e.g. UserDataProcessor)"
+    method_names: "camelCase (e.g. processUserData)"
+    variables: "camelCase (e.g. $userGroup)"
+    database_tables: "tx_extensionname_domain_model_tablename"
+  - id: deprecations
+    pattern: "Check for core deprecations in major upgrades. Do not use deprecated methods or classes."

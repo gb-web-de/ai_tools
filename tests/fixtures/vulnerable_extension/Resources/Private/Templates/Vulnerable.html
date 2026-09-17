@@ -1,0 +1,9 @@
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers">
+<div class="test">
+    <!-- VULNERABILITY 5: Raw output formatting XSS -->
+    <h1>{untrustedTitle -> f:format.raw()}</h1>
+
+    <!-- VULNERABILITY 6: Inline JS event XSS -->
+    <button onclick="handleUser('{untrustedPayload}')">Click Me</button>
+</div>
+</html>

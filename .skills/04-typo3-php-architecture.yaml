@@ -1,0 +1,57 @@
+name: typo3-php-architecture
+description: Standards for Dependency Injection, PSR-14 Events, and PSR-15 Middlewares.
+version: 1.0.0
+target_framework: TYPO3 v12 / v13 / v14
+rules:
+  - id: dependency-injection
+    description: "Use constructor injection via Symfony DI. Avoid GeneralUtility::makeInstance() where injection is possible."
+    code_pattern: |
+      namespace MyVendor\MyExtension\Service;
+
+      use TYPO3\CMS\Core\Database\ConnectionPool;
+
+      final class MyCustomService
+      {
+          public function __construct(
+              private readonly ConnectionPool $connectionPool
+          ) {}
+      }
+
+  - id: psr14-events
+    description: "Use PSR-14 Event Dispatcher instead of legacy hooks."
+    code_pattern: |
+      namespace MyVendor\MyExtension\EventListener;
+
+      use TYPO3\CMS\Core\Mail\Event\BeforeMailerSentMessageEvent;
+      use TYPO3\CMS\Core\Attribute\AsEventListener;
+
+      #[AsEventListener(identifier: 'my-ext/mail-logger')]
+      final class MailLoggerListener
+      {
+          public function __invoke(BeforeMailerSentMessageEvent $event): void
+          {
+              $message = $event->getMailer();
+              // Event manipulation or logging
+          }
+      }
+
+  - id: psr15-middlewares
+    description: "Implement Psr\\Http\\Server\\MiddlewareInterface and declare in Configuration/RequestMiddlewares.php."
+    code_pattern: |
+      namespace MyVendor\MyExtension\Middleware;
+
+      use Psr\Http\Message\ResponseInterface;
+      use Psr\Http\Message\ServerRequestInterface;
+      use Psr\Http\Server\MiddlewareInterface;
+      use Psr\Http\Server\RequestHandlerInterface;
+
+      final class CustomMiddleware implements MiddlewareInterface
+      {
+          public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+          {
+              // Custom request pre-processing
+              $response = $handler->handle($request);
+              // Custom response post-processing
+              return $response;
+          }
+      }

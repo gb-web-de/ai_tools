@@ -1,0 +1,52 @@
+name: typo3-extension-architecture
+description: Guidelines for TYPO3 extension layouts, Site Packages, composer.json, TCA definitions, and FlexForms.
+version: 1.0.0
+target_framework: TYPO3 v12 / v13 / v14
+rules:
+  - id: extension-structure
+    description: "Follow the standardized TYPO3 directory layout."
+    structure:
+      - "Classes/ (PSR-4 autoloaded controllers, domain models, services)"
+      - "Configuration/TCA/ (Table Configuration Arrays per database table)"
+      - "Configuration/Services.yaml (Symfony Dependency Injection)"
+      - "Configuration/RequestMiddlewares.php (PSR-15 Middleware registration)"
+      - "Configuration/Sets/ (TYPO3 v13+ Site Sets / TypoScript configuration)"
+      - "Resources/Private/ (Fluid Templates, Layouts, Partials, Languagexliff)"
+      - "Resources/Public/ (CSS, JS, Assets exposed to web root)"
+      - "composer.json (Package definition with typo3-cms-extension type)"
+
+  - id: tca-definition
+    description: "Return strict array configuration in Configuration/TCA/tx_myext_domain_model_item.php."
+    code_pattern: |
+      <?php
+      declare(strict_types=1);
+
+      return [
+          'ctrl' => [
+              'title' => 'LLL:EXT:my_ext/Resources/Private/Language/locallang_db.xlf:tx_myext_item',
+              'label' => 'title',
+              'tstamp' => 'tstamp',
+              'crdate' => 'crdate',
+              'delete' => 'deleted',
+              'enablecolumns' => [
+                  'disabled' => 'hidden',
+                  'starttime' => 'starttime',
+                  'endtime' => 'endtime',
+              ],
+              'iconfile' => 'EXT:my_ext/Resources/Public/Icons/Extension.svg',
+          ],
+          'columns' => [
+              'title' => [
+                  'label' => 'Title',
+                  'config' => [
+                      'type' => 'input',
+                      'size' => 30,
+                      'required' => true,
+                      'eval' => 'trim',
+                  ],
+              ],
+          ],
+          'types' => [
+              '1' => ['showitem' => 'hidden, title, --div--;LLL:EXT:core/Resources/Private/Language/Form/locallang_tabs.xlf:access, starttime, endtime'],
+          ],
+      ];

@@ -1,0 +1,23 @@
+{
+  "name": "typo3-security-mcp-server",
+  "version": "1.0.0",
+  "description": "Production-ready Model Context Protocol (MCP) Server for TYPO3 Security Auditing & Code Analysis",
+  "main": "build/index.js",
+  "type": "module",
+  "bin": {
+    "typo3-security-mcp": "./build/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node build/index.js",
+    "watch": "tsc --watch"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.1",
+    "rss-parser": "^3.13.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  }
+}

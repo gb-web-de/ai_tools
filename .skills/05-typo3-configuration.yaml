@@ -1,0 +1,35 @@
+name: typo3-configuration
+description: Best practices for System Settings, Site Configurations, Site Sets (v13+), TypoScript, and TSconfig.
+version: 1.0.0
+target_framework: TYPO3 v12 / v13 / v14
+rules:
+  - id: site-configuration
+    description: "Configure multi-language, routing, and base URLs via config/sites/<site-identifier>/config.yaml."
+    code_pattern: |
+      rootPageId: 1
+      base: 'https://example.org/'
+      languages:
+        - title: 'English'
+          enabled: true
+          languageId: 0
+          base: '/'
+          locale: 'en_US.UTF-8'
+          iso-639-1: 'en'
+
+  - id: typoscript-cleanliness
+    description: "Keep TypoScript modular. Use Page TSconfig for backend customization, User TSconfig for editor rights."
+    code_pattern: |
+      # Page TSconfig example
+      RTE.default.preset = full
+      mod.wizards.newContentElement.wizardItems.common {
+          elements {
+              custom_element {
+                  iconIdentifier = content-text
+                  title = Custom Element
+                  description = Renders a custom element
+                  tt_content_defValues {
+                      CType = custom_element
+                  }
+              }
+          }
+      }

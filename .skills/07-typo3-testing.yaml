@@ -1,0 +1,42 @@
+name: typo3-testing
+description: Directives for writing Unit, Functional, and Acceptance Tests with typo3/testing-framework.
+version: 1.0.0
+target_framework: TYPO3 v12 / v13 / v14
+rules:
+  - id: unit-tests
+    description: "Extend TYPO3\\TestingFramework\\Core\\Unit\\UnitTestCase for isolated class testing without database access."
+    code_pattern: |
+      namespace MyVendor\MyExtension\Tests\Unit\Service;
+
+      use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
+      use PHPUnit\Framework\Attributes\Test;
+
+      final class CalculationServiceTest extends UnitTestCase
+      {
+          #[Test]
+          public function calculatesCorrectValue(): void
+          {
+              $service = new CalculationService();
+              self::assertEquals(42, $service->calculate(40, 2));
+          }
+      }
+
+  - id: functional-tests
+    description: "Extend TYPO3\\TestingFramework\\Core\\Functional\\FunctionalTestCase for testing database and core APIs."
+    code_pattern: |
+      namespace MyVendor\MyExtension\Tests\Functional\Repository;
+
+      use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
+      use PHPUnit\Framework\Attributes\Test;
+
+      final class ItemRepositoryTest extends FunctionalTestCase
+      {
+          protected array $testExtensionsToLoad = ['typo3conf/ext/my_extension'];
+
+          #[Test]
+          public function fetchesRecordsFromDatabase(): void
+          {
+              $this->importCSVDataSet(__DIR__ . '/../Fixtures/items.csv');
+              // Run query & execute assertions
+          }
+      }
