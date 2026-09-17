@@ -1,0 +1,62 @@
+[
+  {
+    "id": "TYPO3-PSA-2024-001",
+    "cve": "CVE-2024-XXXXX",
+    "type": "SQL_INJECTION",
+    "severity": "CRITICAL",
+    "title": "SQL Injection in QueryBuilder orderings and raw statements",
+    "affected": "TYPO3 v10.0.0 - v12.4.14",
+    "description": "Dynamic user-controlled column names passed directly to QueryBuilder::orderBy() without column whitelisting or escaping can lead to SQL Injection.",
+    "vulnerable_code": "$queryBuilder->orderBy($request->getParsedBody()['sortField']);",
+    "secure_code": "$allowed = ['title', 'crdate', 'uid'];\n$field = in_array($input, $allowed, true) ? $input : 'uid';\n$queryBuilder->orderBy($field);",
+    "recommendation": "Always enforce strict whitelisting for dynamic table or column identifiers; use createNamedParameter() for values."
+  },
+  {
+    "id": "TYPO3-PSA-2024-002",
+    "cve": "CVE-2024-XXXXY",
+    "type": "BROKEN_ACCESS_CONTROL",
+    "severity": "HIGH",
+    "title": "Broken Access Control via @ignorevalidation on mutating actions",
+    "affected": "All Extbase extensions",
+    "description": "Mutating Extbase Controller actions using @ignorevalidation or #[IgnoreValidation] allow attackers to submit crafted property payloads (Mass Assignment) or bypass domain validation.",
+    "vulnerable_code": "/**\n * @ignorevalidation $model\n */\npublic function updateAction(DomainModel $model): ResponseInterface { ... }",
+    "secure_code": "public function updateAction(DomainModel $model): ResponseInterface {\n    if ($model->getOwner() !== $this->getSecurityContext()->getUser()) {\n        throw new AccessDeniedException();\n    }\n    ...\n}",
+    "recommendation": "Never suppress validation on updateAction, deleteAction, or createAction without manual permission and ownership enforcement."
+  },
+  {
+    "id": "TYPO3-PSA-2024-003",
+    "cve": "CVE-2024-XXXXZ",
+    "type": "XSS",
+    "severity": "HIGH",
+    "title": "Stored & Reflected Cross-Site Scripting in Fluid Templates",
+    "affected": "TYPO3 Fluid Templates",
+    "description": "Using f:format.raw() or escapeOutput='false' on user-controlled variables deactivates context-aware HTML escaping.",
+    "vulnerable_code": "{userContent -> f:format.raw()}\n<button onclick=\"doSomething('{userName}')\">Click</button>",
+    "secure_code": "<f:format.html>{cleanUserContent}</f:format.html>\n<button data-username=\"{userName}\" class=\"js-action\">Click</button>",
+    "recommendation": "Keep default Fluid escaping active. For rich HTML, filter via SanitizerBuilder or HTMLPurifier. Pass JS data via data attributes, never inline JS strings."
+  },
+  {
+    "id": "TYPO3-PSA-2024-004",
+    "cve": "CVE-2024-XXXXW",
+    "type": "DATA_LEAKAGE",
+    "severity": "HIGH",
+    "title": "Multi-Tenant & Permission Bypass via Extbase QuerySettings",
+    "affected": "Extbase Repositories",
+    "description": "Disabling query settings globally via setIgnoreEnableFields(true) or setRespectStoragePage(false) exposes deleted, hidden, or foreign-tenant records to frontend queries.",
+    "vulnerable_code": "$querySettings = $this->defaultQuerySettings;\n$querySettings->setIgnoreEnableFields(true);\n$this->setDefaultQuerySettings($querySettings);",
+    "secure_code": "// Only disable enable fields for specific authenticated admin workflows:\nif ($this->isAdminContext()) {\n    $query->getQuerySettings()->setIgnoreEnableFields(true);\n}",
+    "recommendation": "Never configure setIgnoreEnableFields(true) globally on a repository."
+  },
+  {
+    "id": "TYPO3-PSA-2024-005",
+    "cve": "CVE-2024-XXXXV",
+    "type": "SSRF",
+    "severity": "HIGH",
+    "title": "Server-Side Request Forgery via GeneralUtility::getUrl",
+    "affected": "TYPO3 Core APIs",
+    "description": "Passing unvalidated, user-supplied URLs into GeneralUtility::getUrl() allows attackers to scan internal infrastructure, access metadata services (169.254.169.254), or bypass firewalls.",
+    "vulnerable_code": "$externalData = GeneralUtility::getUrl($userProvidedUrl);",
+    "secure_code": "$allowedHosts = ['api.example.com'];\n$host = parse_url($userProvidedUrl, PHP_URL_HOST);\nif (!in_array($host, $allowedHosts, true) || filter_var($host, FILTER_VALIDATE_IP)) {\n    throw new InvalidArgumentException('Invalid remote host');\n}\n$externalData = GeneralUtility::getUrl($userProvidedUrl);",
+    "recommendation": "Validate and whitelist protocols (https only), hostnames, and block internal IP ranges (127.0.0.1, 10.0.0.0/8, 192.168.0.0/16, 169.254.169.254)."
+  }
+]

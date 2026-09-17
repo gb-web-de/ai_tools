@@ -29,12 +29,13 @@ class Typo3SecurityMcpServer {
   private server: Server;
   private rssParser: Parser;
   private suitePath: string;
+  private knowledgePath: string;
 
   constructor() {
     this.server = new Server(
       {
         name: "typo3-security-mcp",
-        version: "1.2.0"
+        version: "1.3.0"
       },
       {
         capabilities: {
@@ -45,6 +46,7 @@ class Typo3SecurityMcpServer {
 
     this.rssParser = new Parser();
     this.suitePath = this.resolveSuitePath();
+    this.knowledgePath = this.resolveKnowledgePath();
     this.setupHandlers();
   }
 
@@ -57,9 +59,21 @@ class Typo3SecurityMcpServer {
     ];
 
     for (const c of candidates) {
-      if (fs.existsSync(c)) {
-        return c;
-      }
+      if (fs.existsSync(c)) return c;
+    }
+    return candidates[0];
+  }
+
+  private resolveKnowledgePath(): string {
+    const candidates = [
+      path.resolve(__dirname, "../../.typo3-knowledge"),
+      path.resolve(__dirname, "../.typo3-knowledge"),
+      path.resolve(process.cwd(), ".typo3-knowledge"),
+      path.resolve(process.cwd(), "../.typo3-knowledge")
+    ];
+
+    for (const c of candidates) {
+      if (fs.existsSync(c)) return c;
     }
     return candidates[0];
   }
@@ -143,7 +157,7 @@ class Typo3SecurityMcpServer {
         },
         {
           name: "sync_security_advisories",
-          description: "Liest die neuesten TYPO3 Security Advisories (TYPO3-PSA / TYPO3-EXT-SA) vom offiziellen RSS Feed ein.",
+          description: "Liest die neuesten TYPO3 Security Advisories (TYPO3-PSA / TYPO3-EXT-SA) vom offiziellen Feed oder lokalen Wissensspeicher ein.",
           inputSchema: {
             type: "object",
             properties: {
@@ -166,6 +180,38 @@ class Typo3SecurityMcpServer {
               }
             },
             required: ["templatesPath"]
+          }
+        },
+        {
+          name: "query_security_knowledge",
+          description: "Durchsucht die gelernte TYPO3-Sicherheits-Wissensbasis nach verwundbaren Mustern, Gegenmaßnahmen und verifizierten Code-Beispielen.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              query: {
+                type: "string",
+                description: "Suchbegriff (z. B. 'SQL_INJECTION', 'TCA', 'file_upload', 'orderBy', 'SSRF')."
+              },
+              type: {
+                type: "string",
+                description: "Filter nach Schwachstellentyp (z. B. 'SQL_INJECTION', 'XSS', 'BROKEN_ACCESS_CONTROL', 'DATA_LEAKAGE', 'SSRF')."
+              }
+            }
+          }
+        },
+        {
+          name: "record_security_learning",
+          description: "Erweitert die Wissensbasis um ein neu gelerntes Sicherheitsmuster oder einen korrigierten Entwickler-Fix (Continuous Learning).",
+          inputSchema: {
+            type: "object",
+            properties: {
+              title: { type: "string", description: "Titel des Musters." },
+              domain: { type: "string", description: "Bereich (z. B. 'Extbase', 'TCA', 'Fluid', 'FAL', 'Core')." },
+              vulnerable_example: { type: "string", description: "Verwundbares Codebeispiel." },
+              secure_example: { type: "string", description: "Sichere Lösung." },
+              explanation: { type: "string", description: "Erklärung des Risikos und der Abhilfe." }
+            },
+            required: ["title", "domain", "vulnerable_example", "secure_example", "explanation"]
           }
         }
       ]
@@ -190,6 +236,10 @@ class Typo3SecurityMcpServer {
             return await this.handleSyncAdvisories((args?.limit as number) || 10);
           case "check_fluid_templates":
             return await this.handleCheckFluidTemplates(args?.templatesPath as string);
+          case "query_security_knowledge":
+            return await this.handleQueryKnowledge(args?.query as string, args?.type as string);
+          case "record_security_learning":
+            return await this.handleRecordLearning(args as any);
           default:
             throw new McpError(ErrorCode.MethodNotFound, `Unbekanntes Tool: ${name}`);
         }
@@ -486,7 +536,6 @@ class Typo3SecurityMcpServer {
       throw new Error(`Extension-Pfad nicht gefunden: ${resolvedExt}`);
     }
 
-    // Prüfen, ob PHPStan Suite verfügbar ist für tiefgehenden AST Scan
     const phpstanBin = path.join(this.suitePath, "vendor/bin/phpstan");
     if (fs.existsSync(phpstanBin)) {
       const phpstanResult = await this.handleRunPhpstanAudit(resolvedExt);
@@ -605,15 +654,98 @@ class Typo3SecurityMcpServer {
   }
 
   private async handleSyncAdvisories(limit: number) {
-    const feedUrl = "https://news.typo3.com/security/rss-security";
-    const feed = await this.rssParser.parseURL(feedUrl);
+    try {
+      const feedUrl = "https://news.typo3.com/security/rss-security";
+      const feed = await this.rssParser.parseURL(feedUrl);
 
-    const items = (feed.items || []).slice(0, limit).map((item) => ({
-      title: item.title,
-      link: item.link,
-      pubDate: item.pubDate,
-      summary: item.contentSnippet || item.content
-    }));
+      const items = (feed.items || []).slice(0, limit).map((item) => ({
+        title: item.title,
+        link: item.link,
+        pubDate: item.pubDate,
+        summary: item.contentSnippet || item.content
+      }));
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                source: "OFFICIAL_RSS_FEED",
+                feedTitle: feed.title,
+                fetchedCount: items.length,
+                advisories: items
+              },
+              null,
+              2
+            )
+          }
+        ]
+      };
+    } catch (feedError: any) {
+      // Offline / Policy Fallback zur lokalen Wissensdatenbank
+      const localAdvisories = path.join(this.knowledgePath, "advisories.json");
+      if (fs.existsSync(localAdvisories)) {
+        const raw = fs.readFileSync(localAdvisories, "utf8");
+        const parsed = JSON.parse(raw);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  source: "LOCAL_SECURITY_KNOWLEDGE_BASE (OFFLINE_MODE)",
+                  note: "RSS feed nicht erreichbar; nutze kuratiertes Wissens-Repository.",
+                  fetchedCount: parsed.length,
+                  advisories: parsed.slice(0, limit)
+                },
+                null,
+                2
+              )
+            }
+          ]
+        };
+      }
+      throw new Error(`Advisory-Sync fehlgeschlagen und kein lokaler Cache vorhanden: ${feedError.message}`);
+    }
+  }
+
+  private async handleQueryKnowledge(query?: string, type?: string) {
+    const advisoriesFile = path.join(this.knowledgePath, "advisories.json");
+    const patternsFile = path.join(this.knowledgePath, "learned_patterns.json");
+
+    let advisories: any[] = [];
+    let patterns: any[] = [];
+
+    if (fs.existsSync(advisoriesFile)) {
+      advisories = JSON.parse(fs.readFileSync(advisoriesFile, "utf8"));
+    }
+    if (fs.existsSync(patternsFile)) {
+      patterns = JSON.parse(fs.readFileSync(patternsFile, "utf8"));
+    }
+
+    const q = query ? query.toLowerCase() : "";
+    const t = type ? type.toUpperCase() : "";
+
+    const matchedAdvisories = advisories.filter((item) => {
+      const matchType = !t || (item.type && item.type.toUpperCase() === t);
+      const matchQuery =
+        !q ||
+        (item.title && item.title.toLowerCase().includes(q)) ||
+        (item.description && item.description.toLowerCase().includes(q)) ||
+        (item.vulnerable_code && item.vulnerable_code.toLowerCase().includes(q));
+      return matchType && matchQuery;
+    });
+
+    const matchedPatterns = patterns.filter((item) => {
+      const matchType = !t || (item.domain && item.domain.toUpperCase() === t);
+      const matchQuery =
+        !q ||
+        (item.title && item.title.toLowerCase().includes(q)) ||
+        (item.explanation && item.explanation.toLowerCase().includes(q)) ||
+        (item.vulnerable_example && item.vulnerable_example.toLowerCase().includes(q));
+      return matchType && matchQuery;
+    });
 
     return {
       content: [
@@ -621,9 +753,57 @@ class Typo3SecurityMcpServer {
           type: "text",
           text: JSON.stringify(
             {
-              feedTitle: feed.title,
-              fetchedCount: items.length,
-              advisories: items
+              query: query || "ALL",
+              filterType: type || "ALL",
+              totalMatched: matchedAdvisories.length + matchedPatterns.length,
+              advisories: matchedAdvisories,
+              learned_patterns: matchedPatterns
+            },
+            null,
+            2
+          )
+        }
+      ]
+    };
+  }
+
+  private async handleRecordLearning(args: {
+    title: string;
+    domain: string;
+    vulnerable_example: string;
+    secure_example: string;
+    explanation: string;
+  }) {
+    const patternsFile = path.join(this.knowledgePath, "learned_patterns.json");
+    let patterns: any[] = [];
+    if (fs.existsSync(patternsFile)) {
+      patterns = JSON.parse(fs.readFileSync(patternsFile, "utf8"));
+    }
+
+    const newPattern = {
+      pattern_id: `LEARNED-${Date.now()}`,
+      domain: args.domain,
+      learned_from: "AI Agent / Human Feedback Loop",
+      timestamp: new Date().toISOString(),
+      title: args.title,
+      vulnerable_example: args.vulnerable_example,
+      secure_example: args.secure_example,
+      explanation: args.explanation
+    };
+
+    patterns.push(newPattern);
+    fs.mkdirSync(this.knowledgePath, { recursive: true });
+    fs.writeFileSync(patternsFile, JSON.stringify(patterns, null, 2), "utf8");
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            {
+              status: "SUCCESS",
+              message: "Neues Sicherheitswissen erfolgreich in der Wissensbasis persistiert.",
+              learned_pattern: newPattern
             },
             null,
             2

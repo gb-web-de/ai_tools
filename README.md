@@ -6,7 +6,9 @@
 [![PHPStan Level 6](https://img.shields.io/badge/PHPStan-Level%206-brightgreen.svg)](https://phpstan.org/)
 
 Eine universelle, produktionsreife Entwicklungs- und Sicherheits-Suite für **TYPO3 (v12 / v13 / v14)**.
-Sie verbindet **alle modernen KI-Systeme** (Cursor, Claude Code/Desktop, Windsurf, GitHub Copilot, Antigravity) über ein zentrales Regelwerk mit einem **Model Context Protocol (MCP) Server**, tiefgehenden **PHPStan AST-Sicherheitsregeln** und einem **Fluid XSS Auto-Fixer**.
+Sie verbindet **alle modernen KI-Systeme** (Cursor, Claude Code/Desktop, Windsurf, GitHub Copilot, Antigravity) über ein zentrales Regelwerk mit einem **Model Context Protocol (MCP) Server**, tiefgehenden **PHPStan AST-Sicherheitsregeln**, einem **Fluid XSS Auto-Fixer** und einer **selbstlernenden Wissensbasis**.
+
+📖 **Ausführliche Dokumentation:** [docs/SELF_LEARNING_ARCHITECTURE.md](docs/SELF_LEARNING_ARCHITECTURE.md) (Architektur, Continuous Learning, Bedrohungsmodell & Roadmap).
 
 ---
 
@@ -18,7 +20,7 @@ Um ein beliebiges TYPO3-Projekt mit allen KI-Regeln und MCP-Anbindungen auszusta
 node scripts/setup-project.js /pfad/zu/deinem/typo3-projekt
 ```
 
-Dieses Skript installiert automatisch:
+Installiert automatisch:
 * **Cursor**: `.cursorrules`, `.cursor/rules/typo3-rules.mdc` und `.cursor/mcp.json`
 * **Claude Code / Desktop**: `CLAUDE.md`
 * **GitHub Copilot**: `.github/copilot-instructions.md`
@@ -33,25 +35,14 @@ Dieses Skript installiert automatisch:
 ```
 ai_tools/
 ├── ai-rules/                     # 🌟 Single Source of Truth für alle KI-Regeln
-│   ├── 01-security.md            # SQLi, XSS, CSRF, Insecure Deserialization, TCA
-│   ├── 02-core-apis.md           # DBAL (QueryBuilder), FAL, Context API, Caching
-│   ├── 03-extension-arch...md    # TCA, Services.yaml, RequestMiddlewares, Site Sets
-│   ├── 04-php-architecture.md    # DI, Constructor Promotion, PSR-14 Events, PSR-15
-│   ├── 05-site-configuration.md  # config/sites/, Site Sets (v13+), TypoScript
-│   ├── 06-coding-standards.md    # PSR-12/PER, declare(strict_types=1), PHP 8.2+
-│   ├── 07-testing.md             # Unit- & Functional-Tests (typo3/testing-framework)
-│   └── 08-administration.md      # Symfony Console Commands (#[AsCommand]), CLI
+├── .typo3-knowledge/             # 🧠 Persistenter Wissensspeicher (Advisories, gelernte Patterns)
+├── docs/                         # 📖 Master-Dokumentationen
+│   └── SELF_LEARNING_ARCHITECTURE.md
 ├── scripts/
 │   ├── sync-ai-configs.js        # Kompiliert ai-rules/ in alle KI-Zielformate
 │   └── setup-project.js          # Exportiert Regeln & MCP in externe TYPO3-Instanzen
 ├── typo3-mcp-server/             # 🤖 TypeScript MCP-Server (Brücke für LLMs)
-│   ├── src/index.ts              # Stellt Tools für Instanz-Audit, PHPStan AST & Fixer bereit
-│   └── build/index.js            # Kompilierte ausführbare Node.js-Binärdatei
 ├── typo3-security-suite/         # 🛡️ Statische Code-Analyse & CI/CD Pipeline
-│   ├── rules/                    # Eigene PHPStan AST-Sicherheitsregeln
-│   ├── scripts/scan_fluid_xss.py # Python Scanner & Auto-Fixer für Fluid-Templates
-│   ├── rector.php                # Rector-Konfiguration für Refactoring & Quality
-│   └── .github/workflows/        # Einsatzbereite CI/CD GitHub Action
 └── tests/fixtures/               # 🧪 Verwundbare Test-Extension für Verifikationstests
 ```
 
@@ -63,37 +54,24 @@ Der MCP Server (`typo3-mcp-server`) stellt KI-Agenten folgende Werkzeuge live zu
 
 | MCP Tool | Funktion |
 | :--- | :--- |
-| `audit_typo3_instance` | Prüft `settings.php` / `LocalConfiguration.php` (`displayErrors`, `devIPmask`, etc.) und Webroot-Exposure (`.env`, `composer.lock`). |
-| `analyze_typo3_extension` | Tiefenscan einer Extension: Nutzt die PHPStan AST-Regeln und den Python Fluid-Scanner (mit automatischem Fallback). |
+| `audit_typo3_instance` | Prüft `settings.php` / `LocalConfiguration.php` (`displayErrors`, `devIPmask`) und Webroot-Exposure (`.env`, `composer.lock`). |
+| `analyze_typo3_extension` | Tiefenscan einer Extension: Nutzt PHPStan AST-Regeln und Python Fluid-Scanner (mit automatischem Fallback). |
 | `run_phpstan_security_audit` | Führt die dedizierten AST-Regeln (SQLi, Broken Access Control, Echo XSS, Data Leaks) auf PHP-Dateien aus. |
 | `fix_fluid_xss` | **Auto-Fix**: Repariert `f:format.raw()` und unsicheres Escaping in Fluid-Templates automatisch. |
 | `apply_rector_fixes` | Führt Rector-Refactorings zur Code-Modernisierung aus (`--dry-run` oder live). |
-| `sync_security_advisories` | Liest die neuesten TYPO3 Security Advisories via RSS-Feed ein. |
+| `sync_security_advisories` | Liest TYPO3 Security Advisories via RSS-Feed (mit Offline-Fallback zu `.typo3-knowledge/`). |
+| `query_security_knowledge` | **Wissensabfrage**: Durchsucht bekannte CVEs, Anti-Patterns und gehärtete Vorher/Nachher-Lösungen. |
+| `record_security_learning` | **Continuous Learning**: Speichert neu gelernte Sicherheitsmuster oder Entwickler-Fixes persistent ab. |
 | `check_fluid_templates` | Gezielte Untersuchung von Fluid-Templates auf XSS. |
-
-### Integration in Claude Desktop
-
-Füge in deiner `claude_desktop_config.json` hinzu:
-
-```json
-{
-  "mcpServers": {
-    "typo3-security": {
-      "command": "node",
-      "args": ["/ABSOLUTER/PFAD/ZU/ai_tools/typo3-mcp-server/build/index.js"]
-    }
-  }
-}
-```
 
 ---
 
 ## 🛡️ PHPStan AST-Sicherheitsregeln
 
-Die Suite prüft PHP-Code auf AST-Ebene (`PhpParser\Node`), wodurch False Positives minimiert und echte Sicherheitslücken zuverlässig aufgedeckt werden:
+Die Suite prüft PHP-Code auf AST-Ebene (`PhpParser\Node`):
 
 1. **`SqlInjectionQueryBuilderRule`**: Verhindert String-Verkettung (`Concat`) oder Interpolation (`Encapsed`) in QueryBuilder-Methoden (`where`, `andWhere`, `orWhere`, `statement`).
-2. **`IgnoreValidationOnMutationRule`**: Blockiert `@ignorevalidation` und `#[IgnoreValidation]` auf datenverändernden Extbase-Aktionen (`updateAction`, `deleteAction`, `createAction`, `saveAction`).
+2. **`IgnoreValidationOnMutationRule`**: Blockiert `@ignorevalidation` und `#[IgnoreValidation]` auf datenverändernden Extbase-Aktionen.
 3. **`RawFluidOrEchoXssRule`**: Verhindert direkte `echo`-Befehle in Controllern und ViewHelpern.
 4. **`ExtbaseQuerySettingsDataLeakRule`**: Verhindert das unbedachte Deaktivieren von Zugriffsbeschränkungen via `setIgnoreEnableFields(true)` oder `setRespectStoragePage(false)`.
 

@@ -1,0 +1,20 @@
+[
+  {
+    "pattern_id": "TCA-FOREIGN-TABLE-WHERE-SQLI",
+    "domain": "TCA",
+    "learned_from": "Advisory Analysis",
+    "title": "Unquoted Foreign Table Where in TCA",
+    "vulnerable_example": "'foreign_table_where' => 'AND sys_language_uid = ' . $languageId",
+    "secure_example": "'foreign_table_where' => 'AND sys_language_uid = ###REC_FIELD_sys_language_uid###'",
+    "explanation": "Do not concatenate runtime PHP variables into TCA definitions. Use TYPO3 TCA markers (###CURRENT_PID###, ###REC_FIELD_fieldname###) or proper quoting."
+  },
+  {
+    "pattern_id": "FILE-DENY-PATTERN-BYPASS",
+    "domain": "FAL",
+    "learned_from": "Pentest Findings",
+    "title": "Insecure file upload extension whitelisting",
+    "vulnerable_example": "$allowed = 'jpg,png,pdf,php5';",
+    "secure_example": "$allowed = 'jpg,jpeg,png,pdf,webp';\n// Ensure fileDenyPattern matches \\.(php[0-9]?|phar|phtml|sh|cgi|exe)$",
+    "explanation": "Never allow executable or scripted file extensions in user upload fields."
+  }
+]
