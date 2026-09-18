@@ -1,10 +1,13 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import {
   allFixtureFiles,
   analyseFixtures,
+  contentDigest,
   declaredIdentifiers,
+  effectiveStatus,
   findingsFor,
   isSecurityFinding,
   loadCases,
@@ -83,4 +86,52 @@ test('advisory-bound fixtures never overstate their provenance', () => {
       );
     }
   }
+});
+
+test('an approval is bound to the reviewed content and expires when it changes', (t) => {
+  const [sample] = cases;
+  const manifest = path.join(sample.directory, 'case.json');
+  const vulnerable = path.join(sample.directory, sample.vulnerable_path);
+  const originalManifest = fs.readFileSync(manifest, 'utf8');
+  const originalSource = fs.readFileSync(vulnerable, 'utf8');
+  t.after(() => {
+    fs.writeFileSync(manifest, originalManifest);
+    fs.writeFileSync(vulnerable, originalSource);
+  });
+
+  const approve = () => {
+    const stored = JSON.parse(fs.readFileSync(manifest, 'utf8'));
+    stored.review = {
+      status: 'APPROVED',
+      reviewed_by: 'test reviewer',
+      reviewed_at: '2026-09-18',
+      content_digest: contentDigest(sample, sample.directory),
+      note: null,
+    };
+    fs.writeFileSync(manifest, `${JSON.stringify(stored, null, 2)}\n`);
+    return loadCases().find((entry) => entry.slug === sample.slug);
+  };
+
+  assert.equal(effectiveStatus(approve()), 'APPROVED');
+
+  // Editing an example after the fact must not keep a green review status:
+  // the approval was a statement about the code that was read.
+  fs.appendFileSync(vulnerable, '\n// edited after approval\n');
+  assert.equal(effectiveStatus(loadCases().find((entry) => entry.slug === sample.slug)), 'STALE');
+
+  fs.writeFileSync(vulnerable, originalSource);
+  assert.equal(effectiveStatus(loadCases().find((entry) => entry.slug === sample.slug)), 'APPROVED');
+});
+
+test('an approval without a content digest is rejected as hand-edited', (t) => {
+  const [sample] = cases;
+  const manifest = path.join(sample.directory, 'case.json');
+  const original = fs.readFileSync(manifest, 'utf8');
+  t.after(() => fs.writeFileSync(manifest, original));
+
+  const stored = JSON.parse(original);
+  stored.review = { status: 'APPROVED', reviewed_by: 'someone', reviewed_at: '2026-09-18' };
+  fs.writeFileSync(manifest, `${JSON.stringify(stored, null, 2)}\n`);
+
+  assert.throws(() => loadCases(), /content_digest/u);
 });

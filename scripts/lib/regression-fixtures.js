@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
@@ -27,6 +28,28 @@ export function declaredIdentifiers() {
   return matches;
 }
 
+/**
+ * Digest over the two example files a reviewer actually looked at.
+ *
+ * An approval is a statement about specific code. Without binding it to the
+ * content, a pair could be approved once and rewritten afterwards, and the
+ * green review status would still vouch for code nobody has seen.
+ */
+export function contentDigest(entry, directory) {
+  const hash = createHash('sha256');
+  for (const key of ['vulnerable_path', 'secure_path']) {
+    hash.update(`${entry[key]}\n`);
+    hash.update(fs.readFileSync(path.join(directory, entry[key]), 'utf8').replaceAll('\r\n', '\n'));
+  }
+  return hash.digest('hex');
+}
+
+/** APPROVED, PENDING, REJECTED, or STALE when the files changed after approval. */
+export function effectiveStatus(entry) {
+  if (entry.review.status !== 'APPROVED') return entry.review.status;
+  return entry.review.content_digest === contentDigest(entry, entry.directory) ? 'APPROVED' : 'STALE';
+}
+
 function validateCase(entry, directory) {
   const where = path.relative(FIXTURE_ROOT, directory);
   const missing = REQUIRED_FIELDS.filter((field) => entry[field] === undefined || entry[field] === null || entry[field] === '');
@@ -46,6 +69,7 @@ function validateCase(entry, directory) {
   if (origin.kind === 'RULE_CONTRACT' && !origin.reference?.trim()) throw new Error(`${where}/case.json: origin.kind=RULE_CONTRACT benötigt eine reference.`);
   if (!REVIEW_STATUS.includes(review.status)) throw new Error(`${where}/case.json: review.status muss einer von ${REVIEW_STATUS.join(', ')} sein.`);
   if (review.status === 'APPROVED' && (!review.reviewed_by?.trim() || !review.reviewed_at?.trim())) throw new Error(`${where}/case.json: review.status=APPROVED benötigt reviewed_by und reviewed_at.`);
+  if (review.status === 'APPROVED' && !/^[0-9a-f]{64}$/u.test(String(review.content_digest || ''))) throw new Error(`${where}/case.json: review.status=APPROVED benötigt content_digest. Nutze "npm run fixtures:review", statt case.json von Hand zu bearbeiten.`);
 
   for (const key of ['vulnerable_path', 'secure_path']) {
     const target = path.join(directory, entry[key]);

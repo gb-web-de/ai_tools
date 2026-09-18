@@ -34,11 +34,34 @@ try {
   const directory = resolveKnowledgeDir(values['knowledge-dir']);
 
   const target = path.resolve(values.in);
-  if (!fs.existsSync(target)) throw new Error(`Austauschquelle nicht gefunden: ${target}`);
+  if (!fs.existsSync(target)) {
+    // The shared repository is a deliberate setup step, not something this
+    // command creates on the fly: where team knowledge lives is the team's
+    // decision, and silently creating a local directory would look like a
+    // working sync while nothing is actually shared.
+    throw new Error([
+      `Austauschquelle nicht gefunden: ${target}`,
+      '',
+      'Der gemeinsame Wissensbestand liegt in einem eigenen (privaten) Git-Repository,',
+      'das zuerst eingerichtet werden muss. Einmalig pro Arbeitsplatz:',
+      '',
+      `  git clone <url-des-share-repos> ${target.replace(/\/bundles$/u, '')}`,
+      '',
+      'Noch kein Share-Repository vorhanden? Dann lokal anlegen und später verteilen:',
+      '',
+      `  mkdir -p ${target}`,
+      `  git -C ${target.replace(/\/bundles$/u, '')} init`,
+      '  npm run knowledge:export -- --out ' + path.join(target, '<projektname>.json') + ' --label <projektname>',
+      '',
+      'Details: docs/CONTINUOUS_LEARNING.md, Abschnitt "Git-basierter Team-Workflow".',
+    ].join('\n'));
+  }
   const files = fs.statSync(target).isDirectory()
     ? fs.readdirSync(target).filter((name) => name.endsWith('.json')).sort().map((name) => path.join(target, name))
     : [target];
-  if (files.length === 0) throw new Error(`Keine .json-Austauschdateien in ${target}.`);
+  if (files.length === 0) {
+    throw new Error(`Keine .json-Austauschdateien in ${target}. Exportiert ein Projekt bereits dorthin? Siehe "npm run knowledge:export -- --help" bzw. docs/CONTINUOUS_LEARNING.md.`);
+  }
 
   const runs = [];
   for (const file of files) {

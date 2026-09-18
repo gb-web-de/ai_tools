@@ -236,7 +236,7 @@ Die zuvor automatisch erzeugten Einzeiler unter `tests/fixtures/learned/` waren 
 * [x] Automatisierter Regressionstest (`npm run test:regression`): Das verwundbare Beispiel muss mit dem erwarteten Identifier erkannt werden und darf keine fremde Sicherheitsregel auslösen; das sichere Gegenbeispiel muss ohne Sicherheitsbefund bleiben; beide müssen frei von allgemeinen Analysefehlern sein.
 * [x] Generische Einzeiler landen als `EXPERIMENTAL`-Entwürfe in `var/advisory-drafts/` (ungetrackt) und weisen sich im Dateikopf selbst als nicht committierbar aus.
 * [x] Herkunft ist Pflicht und wird schema-validiert: `origin.kind=ADVISORY` verlangt Advisory-ID und https-Link, `origin.kind=RULE_CONTRACT` eine benannte Referenz. `causal_fidelity` trennt „bildet die dokumentierte Ursache ab“ von „bildet die Schwachstellenklasse ab“; die stärkere Behauptung verlangt den belegten Ursachentext.
-* [x] Review-Status je Fixture mit CLI-Übersicht (`npm run fixtures:status`) und Gate-Option `--require-approved`.
+* [x] Review-Status je Fixture mit CLI-Übersicht (`npm run fixtures:status`), Reviewwerkzeug (`npm run fixtures:review`) und Gate-Option `--require-approved`. Eine Freigabe wird an den Inhalt der beiden Beispieldateien gebunden und verfällt bei nachträglicher Änderung (`STALE`); ein Sammelschalter zum Freigeben existiert bewusst nicht.
 * [x] Bestehende `TYPO3-PSA-2024-*`-Fixtures geprüft und entfernt: Diese Seeds tragen CVE-Platzhalter und keinen Quell-Link, erfüllen die Herkunftspflicht also nicht.
 
 **Zwei Befunde aus der Umsetzung, die eigene Korrekturen erforderten:**

@@ -116,6 +116,37 @@ Der Test prüft je Paar drei Aussagen: Das verwundbare Beispiel wird mit dem erw
 
 Die Analyse läuft über `typo3-security-suite/phpstan-fixtures.neon` auf Level 0, damit ein Ergebnis ausschließlich Sicherheitsbefunde enthält – nur so ist die negative Aussage über das sichere Beispiel belastbar. Der Harness verwirft vor jedem Lauf den isolierten Result-Cache (`typo3-security-suite/var/phpstan-fixtures-cache`): PHPStans Cache invalidiert **nicht** bei Änderungen an den Regel-Klassen, ein zwischengespeicherter Lauf würde also weiter Befunde einer Regel melden, die nichts mehr erkennt.
 
+### Review durchführen
+
+Ein Fixture-Paar ist erst dann ein freigegebener Nachweis, wenn jemand die beiden Beispiele gelesen und die Entscheidung festgehalten hat.
+
+```bash
+npm run fixtures:status
+npm run fixtures:review -- --show <slug>
+npm run fixtures:review -- --slug <slug> --by "Dein Name"
+npm run fixtures:review -- --slug <slug> --reject --by "Dein Name" --note "Grund"
+```
+
+`--show` gibt beide Dateien samt Ursache, Herkunft und Prüfpunkten aus. Zu prüfen ist:
+
+1. Bildet das verwundbare Beispiel eine Schwachstelle ab, die in echtem TYPO3-Code so vorkommt?
+2. Trifft die in `case.json` beschriebene `root_cause` auf genau diesen Code zu?
+3. Ist das sichere Gegenbeispiel fachlich gleichwertig – löst es dieselbe Aufgabe, nur sicher?
+4. Stimmt die Herkunft: behauptet `origin` nicht mehr, als die Quelle hergibt?
+5. Ist der erwartete Identifier die Regel, die für diese Schwachstellenklasse zuständig ist?
+
+Dass die Regel das verwundbare Beispiel erkennt und beim sicheren schweigt, prüft bereits der Regressionstest – das ist nicht Aufgabe des Reviews.
+
+Eine Freigabe wird an den Inhalt der beiden Beispieldateien gebunden (`review.content_digest`). Wird eine davon später geändert, verfällt die Freigabe und der Fall erscheint als `[veraltet]`; ohne diese Bindung würde ein einmal grüner Review-Status für Code bürgen, den niemand gesehen hat. `case.json` von Hand auf `APPROVED` zu setzen schlägt deshalb fehl – der Digest fehlt.
+
+Es gibt bewusst keinen Schalter, der alle Fälle auf einmal freigibt. Ein solcher würde das Gate zur Formalie machen.
+
+Ist der Bestand vollständig geprüft, kann der CI-Schritt scharf geschaltet werden:
+
+```bash
+npm run fixtures:status -- --require-approved
+```
+
 ### Grenzen
 
 Die Fixtures belegen das Verhalten der Regeln, nicht die Ausnutzbarkeit einer konkreten veröffentlichten Schwachstelle. Advisory-gebundene Paare tragen derzeit durchgehend `VULNERABILITY_CLASS`, weil die Advisory-Texte im Wissensspeicher die Schwachstellenklasse und die betroffene Extension nennen, nicht die konkrete Codestelle. Ein Fixture ist keine Rekonstruktion fremden Codes. Ein `PENDING`-Paar ist ein Vorschlag, kein freigegebener Nachweis.

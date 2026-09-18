@@ -25,7 +25,8 @@
     "fixtures:status": "node scripts/fixture-status.js",
     "knowledge:export": "node scripts/knowledge-export.js",
     "knowledge:import": "node scripts/knowledge-import.js",
-    "test:exchange": "node --test tests/knowledge-exchange.test.js"
+    "test:exchange": "node --test tests/knowledge-exchange.test.js",
+    "fixtures:review": "node scripts/fixture-review.js"
   },
   "keywords": [
     "typo3",
