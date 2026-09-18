@@ -3,7 +3,7 @@
     "typo3-security": {
       "command": "node",
       "args": [
-        "/Users/gordon.brueggemann/Projekt/ai_tools/typo3-mcp-server/build/index.js"
+        "/Users/gordon.brueggemann/finanztipProjekt/ai_tools/typo3-mcp-server/build/index.js"
       ]
     }
   }

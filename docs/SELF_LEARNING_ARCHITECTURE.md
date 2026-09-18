@@ -1,7 +1,7 @@
 # Autonome & Selbstlernende TYPO3 AI-Sicherheitsarchitektur
 ## Master-Dokumentation: Continuous Learning, Vulnerability Intelligence & Self-Healing
 
-> **Status:** Meilensteine 1–3 implementiert; Meilenstein 4 geplant; L4/L5 bleiben schrittweise auszubauen
+> **Status:** Meilensteine 1–3 implementiert; Meilensteine 4–5 geplant; L4/L5 bleiben schrittweise auszubauen
 > **Zielsysteme:** TYPO3 v12 / v13 / v14  
 > **Integrationen:** Model Context Protocol (MCP), Cursor, Claude Code, Windsurf, GitHub Copilot, PHPStan AST, Rector  
 
@@ -224,7 +224,20 @@ Implementierte MCP-Schnittstellen:
 
 Betrieb, Befehle, Voraussetzungen und die genauen Grenzen sind in [CONTINUOUS_LEARNING.md](CONTINUOUS_LEARNING.md) beschrieben. Die Workflows sind lokal vorbereitet und getestet; eine echte Veröffentlichung auf GitHub erfolgt erst nach Aufnahme in den Default-Branch. Freie LLM-Regelsynthese, Embedding-Suche und vollautonome Patch-Freigabe gehören weiterhin nicht zum implementierten Umfang.
 
-### Meilenstein 4 (Geplant: Wissensgraph im Team und projektübergreifend teilen)
+### Meilenstein 4 (Geplant: Belastbare Advisory-Regressionstests)
+
+Die automatisch erzeugten Einzeiler unter `tests/fixtures/learned/` sind zunächst nur klassifizierte Entwürfe. Sie bilden weder zwingend die konkrete Ursache einer veröffentlichten Schwachstelle ab noch sind sie ohne Test-Harness ein belastbarer Sicherheitsnachweis. Solche generischen Entwürfe werden nicht versioniert oder zu `STRICT` befördert.
+
+* [ ] Für jedes unterstützte Advisory ein realistisches verwundbares Codebeispiel erstellen, das die dokumentierte technische Ursache mit nachvollziehbarer Herkunft abbildet.
+* [ ] Zu jedem verwundbaren Beispiel ein fachlich gleichwertiges, sicheres Gegenbeispiel bereitstellen.
+* [ ] Beide Beispiele automatisiert gegen die zuständige PHPStan-Regel testen: Das verwundbare Beispiel muss mit dem erwarteten Error-Identifier erkannt werden, das sichere Beispiel muss ohne diesen Befund bleiben.
+* [ ] Generische, nicht geprüfte Einzeiler nur als temporäre `EXPERIMENTAL`-Entwürfe behandeln und nicht in `tests/fixtures/learned/` committen.
+* [ ] Human Review und Quellenangabe verpflichtend machen, bevor ein Fixture-Paar versioniert und für CI- oder Regelerzeugung verwendet wird.
+* [ ] Bestehende versionierte `TYPO3-PSA-2024-*`-Fixtures nach denselben Kriterien prüfen, ergänzen oder entfernen.
+
+**Abnahmekriterien:** Jedes versionierte Learned-Fixture besitzt ein verwundbares und ein sicheres Gegenbeispiel sowie einen ausführbaren Regressionstest gegen eine konkrete PHPStan-Regel. Der Test schlägt fehl, wenn die Regel das verwundbare Beispiel nicht erkennt oder beim sicheren Beispiel anschlägt. Nicht validierte Einzeiler gelangen weder in Git noch in den Status `STRICT`.
+
+### Meilenstein 5 (Geplant: Wissensgraph im Team und projektübergreifend teilen)
 
 Ziel ist ein gemeinsamer, versionierter Wissensbestand in einem privaten Git-Repository. Entwickler und Projekte verwenden lokale Kopien; neue Erkenntnisse werden über Pull Requests geprüft und anschließend synchronisiert. Geteilt werden die Quelldaten `advisories.json`, `learned_patterns.json` und – sofern vorhanden – `fixes_history.jsonl`. Der abgeleitete `graph.jsonl` wird lokal neu aufgebaut.
 
