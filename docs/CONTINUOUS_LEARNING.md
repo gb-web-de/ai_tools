@@ -1,6 +1,6 @@
 # Continuous Learning: Betrieb und Grenzen
 
-Meilenstein 3 verbindet lokale Wissenssuche, reviewbasierte Rector-Kandidaten und GitHub-Review-Vorschläge. Meilenstein 4 ergänzt geprüfte Regressionsfixtures mit stabilen Error-Identifiern. Benötigt werden Node.js 20+ und PHP; die Regressionstests verwenden die im Composer-Lockfile festgelegte Security-Suite. Der aktuelle Lockfile wird in CI mit PHP 8.5 geprüft.
+Meilenstein 3 verbindet lokale Wissenssuche, reviewbasierte Rector-Kandidaten und GitHub-Review-Vorschläge. Meilenstein 4 ergänzt geprüfte Regressionsfixtures mit stabilen Error-Identifiern. Meilenstein 5 ergänzt den kontrollierten Austausch des Wissensbestands zwischen Projekten. Benötigt werden Node.js 20+ und PHP; die Regressionstests verwenden die im Composer-Lockfile festgelegte Security-Suite. Der aktuelle Lockfile wird in CI mit PHP 8.5 geprüft.
 
 ## Lokaler Wissensgraph
 
@@ -124,8 +124,97 @@ Die Fixtures belegen das Verhalten der Regeln, nicht die Ausnutzbarkeit einer ko
 
 `npm run learn:advisories` legt generische Entwürfe unter `var/advisory-drafts/` ab. Dieses Verzeichnis ist nicht versioniert, und jeder Entwurf weist sich im Dateikopf als nicht committierbar aus. Ein Entwurf wird erst dadurch zum Nachweis, dass jemand daraus ein realistisches Paar mit `case.json` baut und der Regressionstest beide Richtungen bestätigt.
 
+## Wissensaustausch zwischen Projekten
+
+### Speicherort
+
+Alle Learning-CLIs und der MCP-Server lösen den Speicherort in derselben Reihenfolge auf: expliziter Parameter (`--knowledge-dir`), dann `TYPO3_KNOWLEDGE_PATH`, dann der Repository-Speicher `.typo3-knowledge/`. Bis Meilenstein 5 schrieb der Advisory-Import unabhängig davon immer in den Repository-Speicher – importierte Advisories konnten damit in einem Verzeichnis landen, in dem niemand gesucht hat.
+
+```bash
+export TYPO3_KNOWLEDGE_PATH=/pfad/zum/gemeinsamen/store
+```
+
+### Export
+
+```bash
+npm run knowledge:export -- --dry-run
+npm run knowledge:export -- --out ../typo3-knowledge-share/bundles/projekt-a.json --label projekt-a
+```
+
+Geteilt werden `advisories.json`, `learned_patterns.json` und `fixes_history.jsonl`. `graph.jsonl` wird nie exportiert: Er ist abgeleitet und wird beim Import lokal neu gebaut, sonst entstünde eine zweite Wahrheitsquelle.
+
+Entwickler-Fixes werden standardmäßig nur im Status `APPROVED` geteilt. `PENDING` ist lokaler Arbeitsstand – ihn zu verteilen würde fremde Reviewer zwingen, über unfertige Arbeit eines Kollegen zu urteilen. `REJECTED` wird nie exportiert, auch nicht mit `--include-pending`.
+
+**Freigabeprüfung:** Vor dem Schreiben prüft der Export jeden Eintrag auf mögliche vertrauliche Daten – private Schlüssel, Zugangsdaten im Klartext, AWS-Keys, interne Hostnamen, private IP-Adressen, lokale Benutzerpfade und E-Mail-Adressen. Bei einem Fund bricht der Export ab und nennt Eintrag, **Feld und Textausschnitt**; ohne diese Angaben könnte niemand einen echten Fund von einem Beispiel unterscheiden. Bewusst teilen lässt sich der Inhalt mit `--allow-sensitive`, was im Ergebnis als Warnung erscheint.
+
+Dokumentierte Adressbereiche sind ausgenommen: `10.0.0.0/8` in einer Sicherheitsempfehlung ist eine Bereichsangabe, `169.254.169.254` ein Standardbeispiel. Ein Scanner, der solche Fälle meldet, erzieht Reviewer dazu, ihn durchzuwinken – das wäre schlechter als kein Scanner.
+
+### Import
+
+```bash
+npm run knowledge:import -- --in ../typo3-knowledge-share/bundles --dry-run
+npm run knowledge:import -- --in ../typo3-knowledge-share/bundles
+```
+
+`--in` nimmt eine einzelne Datei oder ein Verzeichnis. Jedes Bundle wird einzeln angewendet, damit eine fehlerhafte Datei die übrigen nicht blockiert.
+
+Jeder eingehende Datensatz wird klassifiziert:
+
+| Zustand | Bedeutung | Wirkung |
+|---|---|---|
+| `new` | Kennung lokal unbekannt | wird übernommen |
+| `unchanged` | Kennung und Inhalt identisch | keine Änderung |
+| `conflict` | gleiche Kennung, abweichender Inhalt | **lokaler Stand bleibt**, Konflikt wird gemeldet |
+| `invalid` | Schema- oder Diff-Verletzung, Dublette im Bundle | wird abgelehnt und gemeldet |
+
+Ein wiederholter Import derselben Daten erzeugt keine Duplikate. Konflikte und ungültige Einträge führen zu einem Exit-Code ungleich 0, verändern aber nichts. Die Identität eines Entwickler-Fixes wird beim Import **aus dem Inhalt neu berechnet**, nie aus dem Bundle übernommen – ein manipulierter Fingerprint kann sich damit nicht als anderer Fix ausgeben.
+
+**Ein Import erteilt keine Freigabe.** Ein importierter Fix landet lokal auf `PENDING`, mit der ursprünglichen Freigabe als Herkunftsangabe unter `imported.origin_review`. Vertrauen wandert nicht mit: Eine Freigabe in Projekt A ist Herkunft, keine lokale Freigabe. Folglich kann ein Import allein auch keine Rector-Regel aktivieren – dafür ist eine lokale Freigabe über `review_developer_fix` nötig.
+
+Nach dem Import wird der lokale Index neu gebaut (`--no-index` unterdrückt das), sodass das übernommene Wissen über dieselbe CLI- und MCP-Suche auffindbar ist wie lokales.
+
+### Git-basierter Team-Workflow
+
+Ein privates Repository hält je Projekt ein Bundle:
+
+```
+typo3-knowledge-share/
+└── bundles/
+    ├── projekt-a.json
+    └── projekt-b.json
+```
+
+Eine Datei pro Projekt ist Absicht: Würden alle in dieselbe Datei exportieren, entstünde bei jedem Beitrag ein Git-Konflikt über eine generierte Datei.
+
+**Beitragen:**
+
+```bash
+npm run knowledge:export -- --out ../typo3-knowledge-share/bundles/projekt-a.json --label projekt-a
+cd ../typo3-knowledge-share
+git checkout -b knowledge/projekt-a-$(date +%Y-%m-%d)
+git add bundles/projekt-a.json && git commit -m "knowledge: update from projekt-a"
+git push -u origin HEAD
+```
+
+Der Pull Request ist der Reviewpunkt: Im Diff sind neue Einträge und geänderte Code-Diffs lesbar. Prüfe dort auf Inhalte, die die automatische Prüfung nicht erkennen kann – Kundennamen, interne Projektbezeichnungen, Geschäftslogik im Diff-Kontext. Ein inhaltlich veränderter Fix ist ein neuer Fix und braucht ein neues Review.
+
+**Übernehmen:**
+
+```bash
+cd ../typo3-knowledge-share && git pull
+cd -
+npm run knowledge:import -- --in ../typo3-knowledge-share/bundles --dry-run
+npm run knowledge:import -- --in ../typo3-knowledge-share/bundles
+```
+
+Die Synchronisierung ist immer explizit. Es gibt keinen Hintergrunddienst, der fremdes Wissen unbemerkt in einen Arbeitsplatz zieht.
+
+### Grenzen
+
+Der Austausch verteilt Referenzmaterial, keine verifizierten Wahrheiten. Ein importierter Eintrag belegt nicht, dass ein Advisory tatsächlich veröffentlicht oder ein Fix korrekt ist – er belegt, dass jemand in einem anderen Projekt ihn erfasst hat. Die automatische Freigabeprüfung erkennt Muster, kein Geschäftsgeheimnis: Der Pull-Request-Review bleibt die eigentliche Kontrolle. Ein zentraler Wissensdienst mit authentifiziertem Netzwerkzugriff und Rollen ist nicht Teil dieser Umsetzung.
+
 ## Verifikation
 
-`npm test` prüft Advisory-Import, Wissensgraph, MCP-Feedback, echte Rector-Transformationen, Git-Patch-Anwendbarkeit, den Review-Lebenszyklus mit simulierten GitHub-Antworten und die Regressionsfixtures aller Sicherheitsregeln. Dazu kommt die bestehende PHPStan-Prüfung der Regeln. Dass die Regressionstests tatsächlich greifen, wurde per Mutationstest in beide Richtungen belegt: Erkennung deaktiviert lässt den Vulnerable-Test fehlschlagen, pauschales Melden den Secure-Test. `learning-tests.yml` führt diesen Ablauf in CI aus. `npm run sync-ai` bleibt ein separates Kommando, damit Tests keine lokalen Editor-Konfigurationen überschreiben.
+`npm test` prüft Advisory-Import, Wissensgraph, MCP-Feedback, echte Rector-Transformationen, Git-Patch-Anwendbarkeit, den Review-Lebenszyklus mit simulierten GitHub-Antworten die Regressionsfixtures aller Sicherheitsregeln sowie den Austausch zwischen zwei getrennten lokalen Kopien – Übernahme, wiederholter Import, Konflikte, ungültige Daten, Freigabeprüfung und die Regel, dass ein Import keine Freigabe erteilt. Dazu kommt die bestehende PHPStan-Prüfung der Regeln. Dass die Regressionstests tatsächlich greifen, wurde per Mutationstest in beide Richtungen belegt: Erkennung deaktiviert lässt den Vulnerable-Test fehlschlagen, pauschales Melden den Secure-Test. `learning-tests.yml` führt diesen Ablauf in CI aus. `npm run sync-ai` bleibt ein separates Kommando, damit Tests keine lokalen Editor-Konfigurationen überschreiben.
 
 Referenzen: [Rector: Custom Rules](https://getrector.com/documentation/custom-rule), [GitHub: sichere Workflows](https://docs.github.com/en/actions/reference/security/secure-use), [GitHub: Pull Request Reviews](https://docs.github.com/en/rest/pulls/reviews).

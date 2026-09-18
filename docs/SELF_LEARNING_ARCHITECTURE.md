@@ -1,7 +1,7 @@
 # Autonome & Selbstlernende TYPO3 AI-Sicherheitsarchitektur
 ## Master-Dokumentation: Continuous Learning, Vulnerability Intelligence & Self-Healing
 
-> **Status:** Meilensteine 1–4 implementiert (Meilenstein 4 wartet noch auf das menschliche Review der Fixtures); Meilenstein 5 geplant; L4/L5 bleiben schrittweise auszubauen
+> **Status:** Meilensteine 1–5 implementiert (Meilenstein 4 wartet noch auf das menschliche Review der Fixtures); L4/L5 bleiben schrittweise auszubauen
 > **Zielsysteme:** TYPO3 v12 / v13 / v14  
 > **Integrationen:** Model Context Protocol (MCP), Cursor, Claude Code, Windsurf, GitHub Copilot, PHPStan AST, Rector  
 
@@ -248,19 +248,23 @@ Die zuvor automatisch erzeugten Einzeiler unter `tests/fixtures/learned/` waren 
 
 **Noch offen:** Alle neun Fixture-Paare stehen auf `PENDING`. Das Review ist ausdrücklich eine menschliche Aufgabe und kann nicht durch den Autor der Fixtures erfolgen. Bis dahin bleibt der CI-Schritt informativ; nach dem Review kann er über `--require-approved` scharf geschaltet werden. Alle advisory-gebundenen Fixtures tragen `causal_fidelity: VULNERABILITY_CLASS`, weil die veröffentlichten Advisory-Texte die Schwachstellenklasse benennen, nicht die konkrete Codestelle – eine Höherstufung auf `DOCUMENTED_ROOT_CAUSE` setzt den belegten Ursachentext voraus.
 
-### Meilenstein 5 (Geplant: Wissensgraph im Team und projektübergreifend teilen)
+### Meilenstein 5 (Implementiert: 18.09.2026 – Wissensgraph im Team und projektübergreifend teilen)
 
-Ziel ist ein gemeinsamer, versionierter Wissensbestand in einem privaten Git-Repository. Entwickler und Projekte verwenden lokale Kopien; neue Erkenntnisse werden über Pull Requests geprüft und anschließend synchronisiert. Geteilt werden die Quelldaten `advisories.json`, `learned_patterns.json` und – sofern vorhanden – `fixes_history.jsonl`. Der abgeleitete `graph.jsonl` wird lokal neu aufgebaut.
+Gemeinsamer, versionierter Wissensbestand über ein privates Git-Repository. Entwickler und Projekte arbeiten mit lokalen Kopien; neue Erkenntnisse werden per Pull Request geprüft und anschließend explizit synchronisiert. Geteilt werden `advisories.json`, `learned_patterns.json` und `fixes_history.jsonl`; der abgeleitete `graph.jsonl` wird lokal neu gebaut.
 
-* [ ] Einheitliche Speicher-Konfiguration über `TYPO3_KNOWLEDGE_PATH` für MCP und alle Learning-CLIs, einschließlich des bislang auf den Projektordner festgelegten Advisory-Imports.
-* [ ] Kontrollierter Export/Import mit versioniertem Austauschformat, Schema-Validierung, Herkunftsangaben und Vorschau der Änderungen.
-* [ ] Git-basierter Team-Workflow mit dokumentierter Einrichtung, expliziter Synchronisierung und Review neuer Einträge über Pull Requests.
-* [ ] Deduplizierung und Konfliktbehandlung für parallele Änderungen; lokale Ergänzungen, Review-Status und Ablehnungen nachvollziehbar zusammenführen.
-* [ ] Freigabeprozess für geteilte Inhalte: Code-Diffs und interne Referenzen vor dem Export auf vertrauliche Daten prüfen und bei Bedarf bereinigen; inhaltlich veränderte Fixes erneut reviewen.
-* [ ] Gemeinsamen Wissensbestand nach dem Import lokal indexieren und über dieselben CLI-/MCP-Suchfunktionen in mehreren Projekten verwenden.
-* [ ] Integrationstests mit zwei getrennten lokalen Kopien für Austausch, wiederholten Import, Konflikte und ungültige Daten sowie eine Team-Betriebsanleitung.
+* [x] Einheitliche Speicher-Auflösung (`scripts/lib/knowledge-paths.js`) für MCP und alle Learning-CLIs: expliziter Parameter, dann `TYPO3_KNOWLEDGE_PATH`, dann Repository-Speicher. Der Advisory-Import schrieb zuvor unabhängig von der Konfiguration in den Projektordner.
+* [x] Versioniertes Austauschformat (`typo3-security-knowledge-exchange`, Version 1) mit Schema-Validierung, Herkunftsangaben und Vorschau über `--dry-run`.
+* [x] Git-basierter Team-Workflow mit einer Bundle-Datei je Projekt, dokumentierter Einrichtung und explizitem Synchronisieren; der Pull Request ist der Reviewpunkt.
+* [x] Deduplizierung und Konfliktbehandlung: Jeder Datensatz wird als `new`, `unchanged`, `conflict` oder `invalid` klassifiziert. Ein Konflikt überschreibt nie – der lokale Stand bleibt maßgeblich und die Abweichung wird gemeldet. Die Identität eines Entwickler-Fixes wird aus dem Inhalt neu berechnet, nie aus dem Bundle übernommen.
+* [x] Freigabeprozess: Der Export prüft jeden Eintrag auf private Schlüssel, Klartext-Zugangsdaten, AWS-Keys, interne Hostnamen, private IP-Adressen, lokale Benutzerpfade und E-Mail-Adressen und bricht mit Feld und Textausschnitt ab. Nur `APPROVED`-Fixes werden standardmäßig geteilt, `REJECTED` nie.
+* [x] Nach dem Import wird lokal neu indexiert; übernommenes Wissen ist über dieselbe CLI- und MCP-Suche auffindbar wie lokales.
+* [x] Integrationstests mit zwei getrennten lokalen Kopien (`npm run test:exchange`) für Austausch, wiederholten Import, Konflikte, ungültige Daten, Freigabeprüfung und Fingerprint-Manipulation; Team-Betriebsanleitung in [CONTINUOUS_LEARNING.md](CONTINUOUS_LEARNING.md).
 
-**Abnahmekriterien:** Ein freigegebener Lernfall aus Projekt A lässt sich in Projekt B übernehmen und dort mit Herkunft und Review-Status finden. Wiederholte Importe erzeugen keine Duplikate. Konflikte und ungültige Daten werden gemeldet, bestehendes Wissen bleibt erhalten. Ein Import allein erteilt keine neue Freigabe und aktiviert keine Rector-Regel.
+**Die zentrale Entwurfsentscheidung: Vertrauen wandert nicht mit.** Ein importierter Entwickler-Fix landet lokal auf `PENDING`, die ursprüngliche Freigabe bleibt als Herkunft unter `imported.origin_review` erhalten. Eine Freigabe in Projekt A ist damit Herkunftsangabe, keine lokale Freigabe. Ohne diese Trennung könnte ein Import in Projekt B unmittelbar eine Rector-Regel scharf schalten – eine Vertrauensausweitung über Projektgrenzen, die niemand bewusst erteilt hätte. Ein Test hält das fest: zwei importierte, in A freigegebene Fixes ergeben in B `INSUFFICIENT_EVIDENCE`, bis ein lokaler Reviewer sie freigibt.
+
+**Ein Befund aus der Umsetzung:** `validateFix` lehnte `source: null` ab, obwohl `recordDeveloperFix` ein nicht gesetztes optionales Feld genau so speichert. Ein gespeicherter Fix bestand damit seine eigene Validierung nicht, und jeder Fix ohne Quellenangabe wäre beim Export stillschweigend verworfen worden. Die Validierung akzeptiert jetzt die gespeicherte Form; ein Test hält die Roundtrip-Eigenschaft fest.
+
+**Abnahmekriterien – Nachweis:** Ein freigegebener Lernfall aus Projekt A lässt sich in Projekt B übernehmen und dort mit Herkunft und Review-Status finden. Wiederholte Importe erzeugen keine Duplikate (`new: 0, unchanged: n`). Konflikte und ungültige Daten werden gemeldet, bestehendes Wissen bleibt erhalten. Ein Import allein erteilt keine neue Freigabe und aktiviert keine Rector-Regel. Alle vier Aussagen sind durch Integrationstests mit zwei getrennten Kopien abgedeckt.
 
 **Optionaler späterer Ausbau:** Zentraler Wissensdienst mit authentifiziertem Netzwerkzugriff, Rollen und zentraler Schreibverwaltung. Die erste Umsetzung dieses Meilensteins konzentriert sich auf den Git-basierten Austausch.
 

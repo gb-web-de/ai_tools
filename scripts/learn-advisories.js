@@ -5,13 +5,15 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 import { distillAdvisory, parseRss, persistLearning } from "./lib/advisory-distiller.js";
+import { resolveKnowledgeDir } from "./lib/knowledge-paths.js";
 
 function parseArguments(argv) {
-  const options = { input: "https://news.typo3.com/security/rss-security", limit: 10, dryRun: false };
+  const options = { input: "https://news.typo3.com/security/rss-security", limit: 10, dryRun: false, knowledgeDir: undefined };
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
     if (argument === "--input") options.input = argv[++index];
     else if (argument === "--limit") options.limit = Number.parseInt(argv[++index], 10);
+    else if (argument === "--knowledge-dir") options.knowledgeDir = argv[++index];
     else if (argument === "--dry-run") options.dryRun = true;
     else if (argument === "--help") options.help = true;
     else throw new Error(`Unbekannte Option: ${argument}`);
@@ -35,7 +37,7 @@ async function readInput(input) {
 async function main() {
   const options = parseArguments(process.argv.slice(2));
   if (options.help) {
-    console.log("Usage: npm run learn:advisories -- [--input <rss|json>] [--limit <1-100>] [--dry-run]");
+    console.log("Usage: npm run learn:advisories -- [--input <rss|json>] [--limit <1-100>] [--knowledge-dir <path>] [--dry-run]");
     return;
   }
 
@@ -45,15 +47,16 @@ async function main() {
 
   const advisories = rawItems.slice(0, options.limit).map(distillAdvisory);
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+  const knowledgeDir = resolveKnowledgeDir(options.knowledgeDir);
   const result = persistLearning(advisories, {
-    knowledgeDir: path.join(root, ".typo3-knowledge"),
+    knowledgeDir,
     // Generic drafts stay out of the versioned fixture tree: only a reviewed
     // vulnerable/secure pair under tests/fixtures/regression/ may be committed.
     draftsDir: path.join(root, "var/advisory-drafts"),
     dryRun: options.dryRun,
   });
 
-  console.log(JSON.stringify({ source: options.input, dryRun: options.dryRun, ...result }, null, 2));
+  console.log(JSON.stringify({ source: options.input, knowledgeDir, dryRun: options.dryRun, ...result }, null, 2));
 }
 
 main().catch((error) => {

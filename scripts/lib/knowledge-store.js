@@ -48,7 +48,7 @@ export function atomicWrite(file, data) {
   }
 }
 
-function withStoreLock(directory, action) {
+export function withStoreLock(directory, action) {
   fs.mkdirSync(directory, { recursive: true });
   const lock = path.join(directory, '.learning.lock');
   let fd;
@@ -147,10 +147,13 @@ export function validateFix(input) {
     if (typeof input[field] !== 'string' || !input[field].trim()) throw new Error(`${field} muss ein nicht-leerer String sein.`);
     if (Buffer.byteLength(input[field], 'utf8') > (field === 'diff' ? 200_000 : 10_000)) throw new Error(`${field} überschreitet das Größenlimit.`);
   }
+  // null and undefined both mean "not set": recordDeveloperFix persists absent
+  // optional fields as null, so a stored fix has to pass its own validation for
+  // an export/import round trip to preserve it.
   for (const field of ['source', 'reviewed_by', 'remediation']) {
-    if (input[field] !== undefined && (typeof input[field] !== 'string' || input[field].length > 2000)) throw new Error(`${field} ist ungültig.`);
+    if (input[field] !== undefined && input[field] !== null && (typeof input[field] !== 'string' || input[field].length > 2000)) throw new Error(`${field} ist ungültig.`);
   }
-  if (input.review_status !== undefined && !['PENDING', 'APPROVED'].includes(input.review_status)) throw new Error('Ungültiger Review-Status.');
+  if (input.review_status !== undefined && !['PENDING', 'APPROVED', 'REJECTED'].includes(input.review_status)) throw new Error('Ungültiger Review-Status.');
   if (input.review_status === 'APPROVED' && !input.reviewed_by?.trim()) throw new Error('Freigegebene Fixes benötigen reviewed_by.');
   if (input.remediation && input.remediation !== 'unserialize_disallow_classes') throw new Error('Nicht unterstützte Remediation.');
   const diff = input.diff.replaceAll('\r\n', '\n').trim();
