@@ -1,0 +1,9 @@
+{
+  "slug": "js-open-redirect-location",
+  "title": "Open redirect through a request-controlled navigation target",
+  "language": "javascript",
+  "expected_identifier": "typo3Security.js.openRedirect",
+  "root_cause": "A request parameter is assigned to location.href unvalidated. Because neither scheme nor host is constrained, the value can navigate users to an attacker-controlled site or execute script through a javascript: URI.",
+  "origin": { "kind": "RULE_CONTRACT", "reference": "OWASP Unvalidated Redirects and Forwards" },
+  "review": { "status": "PENDING", "reviewed_by": null, "reviewed_at": null }
+}

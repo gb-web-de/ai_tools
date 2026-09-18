@@ -1,0 +1,9 @@
+# VULNERABLE FIXTURE - test input only, never ship this.
+#
+# Root cause: the link target is taken straight from a request parameter, so
+# the "back" link can be pointed at any external site, or at a javascript: URI.
+lib.backLink = TEXT
+lib.backLink {
+    value = Back
+    typolink.parameter.data = GP:returnUrl
+}

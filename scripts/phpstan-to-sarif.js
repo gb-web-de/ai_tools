@@ -47,6 +47,20 @@ const RULE_BY_IDENTIFIER = {
   'typo3Security.dataLeakage': ['typo3.security.dataLeakage', 'warning'],
   'typo3Security.insecureFileUpload': ['typo3.security.insecureFileUpload', 'warning'],
   'typo3Security.directSuperglobals': ['typo3.bestPractice.directSuperglobals', 'note'],
+
+  // JavaScript and TypoScript scanners share the identifier contract, so their
+  // findings land in the same GitHub security categories as the PHP ones.
+  'typo3Security.js.domXss': ['typo3.security.crossSiteScripting', 'error'],
+  'typo3Security.js.jqueryHtmlSink': ['typo3.security.crossSiteScripting', 'error'],
+  'typo3Security.js.codeInjection': ['typo3.security.remoteCodeExecution', 'error'],
+  'typo3Security.js.openRedirect': ['typo3.security.openRedirect', 'error'],
+  'typo3Security.js.postMessageOrigin': ['typo3.security.brokenAccessControl', 'warning'],
+  'typo3Security.js.hardcodedSecret': ['typo3.security.hardcodedCredential', 'error'],
+  'typo3Security.ts.unescapedUserInput': ['typo3.security.crossSiteScripting', 'error'],
+  'typo3Security.ts.unsafeParseFunc': ['typo3.security.crossSiteScripting', 'error'],
+  'typo3Security.ts.openRedirect': ['typo3.security.openRedirect', 'error'],
+  'typo3Security.ts.cacheDisabled': ['typo3.security.denialOfService', 'warning'],
+  'typo3Security.ts.debugExposure': ['typo3.security.informationDisclosure', 'warning'],
 };
 
 /** Fallback for findings produced before identifiers were introduced. */

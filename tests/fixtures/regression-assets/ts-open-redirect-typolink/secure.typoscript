@@ -1,0 +1,19 @@
+# SECURE COUNTERPART - functionally equivalent to the vulnerable fixture.
+#
+# The request value selects a page id through a fixed mapping, so the set of
+# reachable link targets is closed. Escaping would not help here: the value is
+# a navigation target, not text.
+lib.backLink = TEXT
+lib.backLink {
+    value = Back
+    typolink.parameter.cObject = CASE
+    typolink.parameter.cObject {
+        key.data = GP:returnTo
+        default = TEXT
+        default.value = 1
+        overview = TEXT
+        overview.value = 12
+        archive = TEXT
+        archive.value = 34
+    }
+}

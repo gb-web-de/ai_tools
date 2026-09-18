@@ -1,0 +1,9 @@
+# VULNERABLE FIXTURE - test input only, never ship this.
+#
+# Root cause: the RTE parse configuration permits tags that execute script or
+# load external content, and switches off the TYPO3 HTML sanitizer.
+lib.parseFunc_RTE < lib.parseFunc
+lib.parseFunc_RTE {
+    allowTags = p,b,i,a,ul,ol,li,script,iframe
+    htmlSanitize = 0
+}

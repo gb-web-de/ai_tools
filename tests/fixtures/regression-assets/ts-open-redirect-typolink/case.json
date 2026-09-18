@@ -1,0 +1,9 @@
+{
+  "slug": "ts-open-redirect-typolink",
+  "title": "Open redirect through a request-controlled typolink target",
+  "language": "typoscript",
+  "expected_identifier": "typo3Security.ts.openRedirect",
+  "root_cause": "A typolink parameter is filled from GP: without validation. The resulting link can point at an external site or a javascript: URI. Escaping does not mitigate this, because the value is used as a navigation target rather than as text.",
+  "origin": { "kind": "RULE_CONTRACT", "reference": "OWASP Unvalidated Redirects and Forwards; TYPO3 TypoScript Reference: typolink" },
+  "review": { "status": "PENDING", "reviewed_by": null, "reviewed_at": null }
+}

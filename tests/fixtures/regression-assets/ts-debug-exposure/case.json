@@ -1,0 +1,9 @@
+{
+  "slug": "ts-debug-exposure",
+  "title": "Information disclosure through unconditional debug output",
+  "language": "typoscript",
+  "expected_identifier": "typo3Security.ts.debugExposure",
+  "root_cause": "config.debug is enabled unconditionally and the content object exception handler is switched off. Both leak internal state - timings, paths, stack traces - to any visitor, which hands an attacker a map of the installation.",
+  "origin": { "kind": "RULE_CONTRACT", "reference": "TYPO3 TypoScript Reference: config.debug, contentObjectExceptionHandler" },
+  "review": { "status": "PENDING", "reviewed_by": null, "reviewed_at": null }
+}

@@ -1,0 +1,9 @@
+{
+  "slug": "js-postmessage-origin",
+  "title": "Unauthenticated cross-document message handling",
+  "language": "javascript",
+  "expected_identifier": "typo3Security.js.postMessageOrigin",
+  "root_cause": "A message listener processes event.data without inspecting event.origin. Any document that holds a reference to this window can post to it, so the payload is attacker-controlled - a real concern for TYPO3 backend modules, which run in iframes.",
+  "origin": { "kind": "RULE_CONTRACT", "reference": "MDN: Window.postMessage security concerns" },
+  "review": { "status": "PENDING", "reviewed_by": null, "reviewed_at": null }
+}

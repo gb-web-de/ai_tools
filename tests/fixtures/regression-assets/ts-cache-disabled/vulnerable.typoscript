@@ -1,0 +1,8 @@
+# VULNERABLE FIXTURE - test input only, never ship this.
+#
+# Root cause: the page cache is switched off globally to make one dynamic
+# element work. Every request now renders the full page from scratch.
+config.no_cache = 1
+
+page.20 = USER
+page.20.userFunc = Vendor\Extension\Controller\WeatherController->render

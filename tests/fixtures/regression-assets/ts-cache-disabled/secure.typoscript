@@ -1,0 +1,8 @@
+# SECURE COUNTERPART - functionally equivalent to the vulnerable fixture.
+#
+# The page stays cached and only the dynamic element is rendered per request,
+# so ordinary traffic no longer forces a full render each time.
+config.no_cache = 0
+
+page.20 = USER_INT
+page.20.userFunc = Vendor\Extension\Controller\WeatherController->render

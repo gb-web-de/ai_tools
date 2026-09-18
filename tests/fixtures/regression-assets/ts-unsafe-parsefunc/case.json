@@ -1,0 +1,9 @@
+{
+  "slug": "ts-unsafe-parsefunc",
+  "title": "Stored XSS through a permissive parseFunc configuration",
+  "language": "typoscript",
+  "expected_identifier": "typo3Security.ts.unsafeParseFunc",
+  "root_cause": "parseFunc permits script and iframe in allowTags and disables htmlSanitize. Editor-supplied or imported markup is rendered verbatim, which turns content editing into script execution against every visitor.",
+  "origin": { "kind": "RULE_CONTRACT", "reference": "TYPO3 TypoScript Reference: parseFunc, htmlSanitize; CLAUDE.md section 2" },
+  "review": { "status": "PENDING", "reviewed_by": null, "reviewed_at": null }
+}

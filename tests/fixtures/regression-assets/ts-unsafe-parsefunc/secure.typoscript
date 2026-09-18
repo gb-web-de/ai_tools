@@ -1,0 +1,9 @@
+# SECURE COUNTERPART - functionally equivalent to the vulnerable fixture.
+#
+# The same editorial markup is permitted, minus the tags that execute script or
+# embed external documents, and the TYPO3 HTML sanitizer stays active.
+lib.parseFunc_RTE < lib.parseFunc
+lib.parseFunc_RTE {
+    allowTags = p,b,i,a,ul,ol,li
+    htmlSanitize = 1
+}

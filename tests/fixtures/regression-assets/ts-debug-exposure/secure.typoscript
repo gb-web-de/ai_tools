@@ -1,0 +1,9 @@
+# SECURE COUNTERPART - functionally equivalent to the vulnerable fixture.
+#
+# The same aids are available where they are needed, but bound to the
+# development context, so visitors never see internal state.
+config.debug = 0
+
+[applicationContext matches "/^Development/"]
+    config.debug = 1
+[END]

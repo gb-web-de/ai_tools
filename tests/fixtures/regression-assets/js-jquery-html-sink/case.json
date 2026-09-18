@@ -1,0 +1,9 @@
+{
+  "slug": "js-jquery-html-sink",
+  "title": "DOM XSS through a jQuery HTML sink",
+  "language": "javascript",
+  "expected_identifier": "typo3Security.js.jqueryHtmlSink",
+  "root_cause": "A dynamic value is passed to jQuery .html(). jQuery parses the argument as HTML and executes inline handlers it contains, so a record label containing markup becomes script execution.",
+  "origin": { "kind": "RULE_CONTRACT", "reference": "jQuery documentation: .html() security note" },
+  "review": { "status": "PENDING", "reviewed_by": null, "reviewed_at": null }
+}

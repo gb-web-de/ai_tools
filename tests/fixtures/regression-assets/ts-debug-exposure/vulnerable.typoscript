@@ -1,0 +1,6 @@
+# VULNERABLE FIXTURE - test input only, never ship this.
+#
+# Root cause: debugging aids are switched on unconditionally, so they are
+# active in production and expose internal state to every visitor.
+config.debug = 1
+config.contentObjectExceptionHandler = 0

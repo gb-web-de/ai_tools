@@ -1,0 +1,10 @@
+# SECURE COUNTERPART - functionally equivalent to the vulnerable fixture.
+#
+# htmlSpecialChars turns the request value into text, so markup inside it is
+# displayed literally instead of being parsed by the browser.
+lib.searchTerm = TEXT
+lib.searchTerm {
+    data = GP:tx_solr|q
+    htmlSpecialChars = 1
+    wrap = <p class="search-term">Results for |</p>
+}

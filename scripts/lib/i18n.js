@@ -165,6 +165,24 @@ const MESSAGES = {
     de: 'Hinweis: Wird eines der beiden Beispiele danach geändert, verfällt die Freigabe (Status STALE).',
   },
 
+  // --- asset scan ---
+  'scan.targetRequired': {
+    en: 'A path is required: npm run scan:assets -- <path to the extension>',
+    de: 'Ein Pfad ist erforderlich: npm run scan:assets -- <pfad zur extension>',
+  },
+  'scan.scanned': {
+    en: '{count} file(s) scanned, {findings} finding(s)',
+    de: '{count} Datei(en) geprüft, {findings} Befund(e)',
+  },
+  'scan.unreadable': {
+    en: '{count} file(s) could not be parsed and were therefore NOT analysed:',
+    de: '{count} Datei(en) konnten nicht geparst und daher NICHT analysiert werden:',
+  },
+  'scan.total': {
+    en: 'Total: {total} finding(s) across {rules} rules.',
+    de: 'Gesamt: {total} Befund(e) über {rules} Regeln.',
+  },
+
   // --- advisory learning ---
   'learn.usage': {
     en: 'Usage: npm run learn:advisories -- [--input <rss|json>] [--limit <1-100>] [--knowledge-dir <path>] [--lang <en|de>] [--dry-run]',

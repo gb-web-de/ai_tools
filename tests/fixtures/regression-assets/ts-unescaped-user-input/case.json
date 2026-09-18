@@ -1,0 +1,9 @@
+{
+  "slug": "ts-unescaped-user-input",
+  "title": "Reflected XSS through unescaped request data in TypoScript",
+  "language": "typoscript",
+  "expected_identifier": "typo3Security.ts.unescapedUserInput",
+  "root_cause": "A TEXT object reads its value from GP: and renders it without htmlSpecialChars. The request value reaches the response body verbatim, so markup in the query string executes in the visitor's browser.",
+  "origin": { "kind": "RULE_CONTRACT", "reference": "TYPO3 TypoScript Reference: stdWrap htmlSpecialChars; CLAUDE.md section 2" },
+  "review": { "status": "PENDING", "reviewed_by": null, "reviewed_at": null }
+}

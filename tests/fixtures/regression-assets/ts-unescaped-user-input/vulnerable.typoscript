@@ -1,0 +1,9 @@
+# VULNERABLE FIXTURE - test input only, never ship this.
+#
+# Root cause: the search term is read from the request and rendered without
+# escaping, so markup in the query string is reflected into the page.
+lib.searchTerm = TEXT
+lib.searchTerm {
+    data = GP:tx_solr|q
+    wrap = <p class="search-term">Results for |</p>
+}

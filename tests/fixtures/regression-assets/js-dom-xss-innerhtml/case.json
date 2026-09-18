@@ -1,0 +1,9 @@
+{
+  "slug": "js-dom-xss-innerhtml",
+  "title": "DOM XSS through innerHTML with a request-derived value",
+  "language": "javascript",
+  "expected_identifier": "typo3Security.js.domXss",
+  "root_cause": "A value read from the URL is assigned to innerHTML. The browser parses the string as markup, so an attacker-supplied payload executes in the context of the backend or frontend page.",
+  "origin": { "kind": "RULE_CONTRACT", "reference": "OWASP DOM based XSS; CLAUDE.md section 2 (XSS prevention)" },
+  "review": { "status": "PENDING", "reviewed_by": null, "reviewed_at": null }
+}

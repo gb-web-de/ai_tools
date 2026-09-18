@@ -1,0 +1,9 @@
+{
+  "slug": "ts-cache-disabled",
+  "title": "Denial-of-service surface through a globally disabled page cache",
+  "language": "typoscript",
+  "expected_identifier": "typo3Security.ts.cacheDisabled",
+  "root_cause": "config.no_cache = 1 disables the page cache for the whole site, usually to make a single dynamic element work. Every request then renders the complete page, so ordinary traffic - or a trivial request flood - exhausts the backend. The correct scope for a dynamic element is USER_INT.",
+  "origin": { "kind": "RULE_CONTRACT", "reference": "TYPO3 TypoScript Reference: config.no_cache, USER_INT" },
+  "review": { "status": "PENDING", "reviewed_by": null, "reviewed_at": null }
+}

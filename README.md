@@ -112,6 +112,9 @@ npm run learn:rector
 npm run test:regression
 npm run fixtures:status
 
+# JavaScript und TypoScript einer Extension prüfen
+npm run scan:assets -- /pfad/zur/extension
+
 # Wissensbestand mit anderen Projekten teilen
 npm run knowledge:export -- --out ../typo3-knowledge-share/bundles/projekt-a.json --label projekt-a
 npm run knowledge:import -- --in ../typo3-knowledge-share/bundles --dry-run
@@ -120,6 +123,17 @@ npm run knowledge:import -- --in ../typo3-knowledge-share/bundles --dry-run
 Alle Learning-CLIs und der MCP-Server lösen den Speicherort gleich auf: `--knowledge-dir`, dann `TYPO3_KNOWLEDGE_PATH`, dann `.typo3-knowledge/`.
 
 Die Konsolenausgabe ist zweisprachig: `--lang en|de`, sonst `TYPO3_AI_LANG`, sonst die System-Locale (`LANG`), sonst Englisch.
+
+### Abgedeckte Sprachen
+
+| Fläche | Werkzeug | Verfahren |
+| --- | --- | --- |
+| PHP | 9 PHPStan-Regeln | AST |
+| Fluid (`.html`) | `scan_fluid_xss.py` | Muster |
+| JavaScript | `npm run scan:js` | AST (acorn) |
+| TypoScript / TSconfig | `npm run scan:typoscript` | Pfad-Parser |
+
+Alle Werkzeuge geben stabile Identifier aus (`typo3Security.*`), auf die Tests und der SARIF-Export abbilden. Jede Regel besitzt ein Fixture-Paar aus verwundbarem und sicherem Beispiel.
 
 Der Advisory-Distiller klassifiziert nur bekannte Schwachstellenklassen. Unbekannte Kategorien bleiben als `UNCLASSIFIED` im Wissensspeicher und müssen vor einer Regelerzeugung menschlich geprüft werden. Automatisch erzeugte Entwürfe landen ungetrackt unter `var/advisory-drafts/` – sie sind klassifizierte Vorschläge, kein Sicherheitsnachweis.
 

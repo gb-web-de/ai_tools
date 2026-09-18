@@ -173,6 +173,60 @@ Die Fixtures belegen das Verhalten der Regeln, nicht die Ausnutzbarkeit einer ko
 
 `npm run learn:advisories` legt generische Entwürfe unter `var/advisory-drafts/` ab. Dieses Verzeichnis ist nicht versioniert, und jeder Entwurf weist sich im Dateikopf als nicht committierbar aus. Ein Entwurf wird erst dadurch zum Nachweis, dass jemand daraus ein realistisches Paar mit `case.json` baut und der Regressionstest beide Richtungen bestätigt.
 
+## JavaScript- und TypoScript-Prüfung
+
+Die PHPStan-Regeln sehen nur PHP, der Fluid-Scanner nur `.html`. JavaScript im Browser und TypoScript blieben damit ungeprüft – zwei Flächen, auf denen TYPO3-Extensions regelmäßig angreifbar sind.
+
+```bash
+npm run scan:assets -- <pfad/zur/extension>
+npm run scan:js -- <pfad>
+npm run scan:typoscript -- <pfad>
+npm run scan:assets -- <pfad> --json
+```
+
+Im MCP-Server steht dieselbe Prüfung als Werkzeug `scan_frontend_assets` bereit, mit optionalem `only`-Parameter.
+
+### JavaScript
+
+Die Analyse arbeitet auf dem **AST** (acorn), nicht auf regulären Ausdrücken. Ein Regex-Scanner trifft in Kommentaren und Strings und übersieht Schreibvarianten; bei Sicherheitsbefunden ist beides untragbar.
+
+| Identifier | Befund |
+| --- | --- |
+| `typo3Security.js.domXss` | Dynamischer Wert an `innerHTML`, `outerHTML`, `insertAdjacentHTML` oder `document.write` |
+| `typo3Security.js.jqueryHtmlSink` | Dynamischer Wert an jQuery `.html()`, `.replaceWith()`, `.wrap()`, oder ein gebauter String an `.append()` und Verwandte |
+| `typo3Security.js.codeInjection` | `eval()`, `new Function()`, String an `setTimeout`/`setInterval` |
+| `typo3Security.js.openRedirect` | Dynamisches Navigationsziel an `location.href`, `location.assign()`, `location.replace()` |
+| `typo3Security.js.postMessageOrigin` | `postMessage(…, '*')`, oder ein `message`-Listener, der `event.origin` nicht prüft |
+| `typo3Security.js.hardcodedSecret` | Zugangsdaten in ausgeliefertem Browser-Code |
+
+Entscheidend für die Brauchbarkeit ist, was **nicht** gemeldet wird. Ein Wert, den die statische Analyse als feste Zeichenkette nachweisen kann, stammt vom Autor, nicht von einem Angreifer: String-Literale, Template-Literale ohne Ausdrücke, Konkatenationen davon – und Zugriffe auf eine `const`-Tabelle, die ausschließlich String-Literale enthält. Damit ist die übliche Härtung per Allowlist (`ROUTES[key]`) schreibbar, ohne dass der Scanner sie anmeckert. Das ist dieselbe Ausnahme wie bei der PHP-SSRF-Regel.
+
+Scopes werden nicht verfolgt. Ein Name, der in einer Funktion sicher und in einer anderen unsicher gebunden ist, gilt deshalb als unsicher: Eine verlorene Ausnahme kostet einen False Positive, eine zu großzügige würde einen echten Befund verstecken.
+
+Nicht parsebare Dateien werden als `unreadable` ausgewiesen und lassen das CLI mit Exit-Code 1 enden. Ein sauberes Ergebnis über eine Datei, die niemand analysieren konnte, wäre die schlechtestmögliche Ausgabe – es liest sich wie „keine Probleme gefunden“. Minifizierte Bundles (`*.min.js`) und `node_modules` werden übersprungen.
+
+### TypoScript
+
+TypoScript wird zu vollständigen Pfad-/Wert-Paaren geparst, inklusive Blöcken und Conditions. Das ist nötig, weil die Sicherheitsfrage nicht in der Zeile selbst steht: `data = GP:q` ist nur dann gefährlich, wenn kein Geschwisterpfad `htmlSpecialChars` setzt – und der kann viele Zeilen entfernt im selben Block stehen.
+
+| Identifier | Befund |
+| --- | --- |
+| `typo3Security.ts.unescapedUserInput` | `data`/`insertData` aus `GP:`, `TSFE:` u. ä. ohne `htmlSpecialChars` oder `intval` |
+| `typo3Security.ts.openRedirect` | `typolink.parameter` aus Request-Daten |
+| `typo3Security.ts.unsafeParseFunc` | `allowTags` mit `script`, `iframe`, `object`, `embed`, `form`, `base`, `link`, `meta`; oder `htmlSanitize = 0` |
+| `typo3Security.ts.cacheDisabled` | `config.no_cache = 1` |
+| `typo3Security.ts.debugExposure` | `config.debug`, `config.admPanel`, `contentObjectExceptionHandler = 0` |
+
+Zwei bewusste Ausnahmen: Ein `key`-Pfad ist der Selektor eines `CASE`-Objekts – sein Wert wird verglichen, nie ausgegeben, Escaping wäre dort sinnlos. Und Zuweisungen innerhalb einer Condition, die den Application Context einschränkt (`[applicationContext matches "/^Development/"]`), werden nicht als Debug-Ausgabe gemeldet: Das ist der dokumentierte Weg, Debugging dort zu haben, wo es hingehört.
+
+### Nachweis und Grenzen
+
+Jede der elf Regeln besitzt ein Fixture-Paar unter `tests/fixtures/regression-assets/<slug>/` mit `vulnerable`- und `secure`-Datei sowie `case.json`. `npm run test:assets` prüft beide Richtungen und dass ein verwundbares Beispiel keine fremde Regel auslöst. Beide Fehlerrichtungen sind per Mutationstest belegt.
+
+Beim Aufbau dieser Paare meldete der Scanner vier False Positives auf den **sicheren** Gegenbeispielen: `.append()` mit einem jQuery-Objekt, ein Redirect über eine Allowlist-Tabelle, Debug in einer Kontext-Condition und der Selektor eines CASE-Objekts. Alle vier waren Schwächen des Scanners, nicht der Fixtures, und wurden behoben, bevor er je auf echten Code lief.
+
+Die Prüfung ist eine Quelltextanalyse ohne Datenflussverfolgung über Funktions- und Dateigrenzen. Sie findet die Muster, die sie kennt, und belegt nicht die Ausnutzbarkeit eines Befundes. Umgekehrt heißt ein leeres Ergebnis nicht, dass eine Extension sicher ist.
+
 ## Wissensaustausch zwischen Projekten
 
 ### Speicherort

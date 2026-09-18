@@ -1,0 +1,9 @@
+{
+  "slug": "js-code-injection-eval",
+  "title": "Code injection through eval() on a server-supplied string",
+  "language": "javascript",
+  "expected_identifier": "typo3Security.js.codeInjection",
+  "root_cause": "A string that travelled through the response is passed to eval(), so it is executed as JavaScript. Any injection into that value becomes arbitrary code execution in the visitor's session.",
+  "origin": { "kind": "RULE_CONTRACT", "reference": "OWASP Code Injection; MDN: never use eval" },
+  "review": { "status": "PENDING", "reviewed_by": null, "reviewed_at": null }
+}

@@ -67,6 +67,10 @@ jobs:
           sarif_file: phpstan-results.sarif
           category: typo3-security-audit
 
-      - name: 4. Fluid XSS Scanner Verification
+      - name: 4. JavaScript & TypoScript Security Scan
+        run: |
+          node scripts/scan-assets.js tests/fixtures/vulnerable_extension || true
+
+      - name: 5. Fluid XSS Scanner Verification
         run: |
           python3 typo3-security-suite/scripts/scan_fluid_xss.py tests/fixtures/vulnerable_extension/Resources/Private/Templates/ || true
