@@ -1,0 +1,18 @@
+{
+  "slug": "direct-superglobals-in-controller",
+  "title": "Unabstracted request input through direct $_GET access",
+  "finding_type": "INPUT_HANDLING",
+  "severity": "MEDIUM",
+  "expected_identifier": "typo3Security.directSuperglobals",
+  "rule": "Security\\TYPO3\\Rules\\DirectSuperglobalsRule",
+  "root_cause": "The controller reads request input from the $_GET superglobal instead of the PSR-7 request. The value bypasses the request abstraction and Extbase property mapping, so it is untyped and unvalidated at the boundary.",
+  "vulnerable_path": "Vulnerable/Classes/Controller/FilterController.php",
+  "secure_path": "Secure/Classes/Controller/FilterController.php",
+  "origin": {
+    "kind": "RULE_CONTRACT",
+    "reference": "CLAUDE.md, TYPO3 Core APIs (PSR-7 request handling)",
+    "causal_fidelity": "VULNERABILITY_CLASS",
+    "note": "This rule reports a hardening / best-practice violation rather than an exploitable vulnerability on its own. No advisory maps to it."
+  },
+  "review": { "status": "PENDING", "reviewed_by": null, "reviewed_at": null }
+}

@@ -19,13 +19,17 @@ test("parses, classifies and persists a known advisory", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "typo3-advisory-"));
   const result = persistLearning([advisory], {
     knowledgeDir: path.join(root, "knowledge"),
-    fixturesDir: path.join(root, "fixtures"),
+    draftsDir: path.join(root, "drafts"),
     dryRun: false,
   });
-  assert.deepEqual(result.createdFixtures, ["TYPO3-CORE-SA-2026-001.php"]);
-  const fixture = fs.readFileSync(path.join(root, "fixtures/TYPO3-CORE-SA-2026-001.php"), "utf8");
+  assert.deepEqual(result.createdDrafts, ["TYPO3-CORE-SA-2026-001.php"]);
+  const fixture = fs.readFileSync(path.join(root, "drafts/TYPO3-CORE-SA-2026-001.php"), "utf8");
   assert.match(fixture, /declare\(strict_types=1\);/u);
   assert.match(fixture, /->where\('uid = ' \. \$userInput\)/u);
+  // A generic draft must state that it is not evidence and must not be committed,
+  // so it cannot be mistaken for a reviewed regression fixture.
+  assert.match(fixture, /EXPERIMENTAL DRAFT[\s\S]*do not commit this file/u);
+  assert.match(fixture, /tests\/fixtures\/regression/u);
 });
 
 test("does not generate code for an unknown advisory category", () => {
@@ -33,12 +37,12 @@ test("does not generate code for an unknown advisory category", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "typo3-advisory-"));
   const result = persistLearning([advisory], {
     knowledgeDir: path.join(root, "knowledge"),
-    fixturesDir: path.join(root, "fixtures"),
+    draftsDir: path.join(root, "drafts"),
     dryRun: false,
   });
   assert.equal(advisory.confidence, "UNCLASSIFIED");
-  assert.deepEqual(result.createdFixtures, []);
-  assert.equal(fs.existsSync(path.join(root, "fixtures")), false);
+  assert.deepEqual(result.createdDrafts, []);
+  assert.equal(fs.existsSync(path.join(root, "drafts")), false);
 });
 
 test("prefers the most specific taxonomy match and preserves curated examples", () => {
@@ -58,7 +62,7 @@ test("prefers the most specific taxonomy match and preserves curated examples", 
   );
   persistLearning([advisory], {
     knowledgeDir,
-    fixturesDir: path.join(root, "fixtures"),
+    draftsDir: path.join(root, "drafts"),
     dryRun: false,
   });
   const [stored] = JSON.parse(fs.readFileSync(path.join(knowledgeDir, "advisories.json"), "utf8"));

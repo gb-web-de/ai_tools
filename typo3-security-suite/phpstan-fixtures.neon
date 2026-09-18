@@ -1,0 +1,31 @@
+# Dedicated configuration for the advisory / rule regression fixtures.
+#
+# Level 0 keeps generic static-analysis findings out of the way so a fixture
+# result contains security-rule findings only. That is what makes the negative
+# assertion ("the secure counterpart produces no finding") meaningful.
+includes:
+    - vendor/saschaegerer/phpstan-typo3/extension.neon
+
+parameters:
+    level: 0
+    # Isolated result cache. The regression harness wipes this directory before
+    # every run: PHPStan's result cache does not invalidate on changes to the
+    # custom rule classes, so a cached run would keep reporting findings for a
+    # rule that no longer detects anything - a silently green test suite.
+    tmpDir: var/phpstan-fixtures-cache
+    paths:
+        - ../tests/fixtures/regression
+    # Fixtures intentionally contain vulnerable code; never let PHPStan bail out
+    # on them being unused or unreferenced.
+    reportUnmatchedIgnoredErrors: false
+
+rules:
+    - Security\TYPO3\Rules\SqlInjectionQueryBuilderRule
+    - Security\TYPO3\Rules\IgnoreValidationOnMutationRule
+    - Security\TYPO3\Rules\RawFluidOrEchoXssRule
+    - Security\TYPO3\Rules\ExtbaseQuerySettingsDataLeakRule
+    - Security\TYPO3\Rules\InsecureDeserializationRule
+    - Security\TYPO3\Rules\SsrfGeneralUtilityGetUrlRule
+    - Security\TYPO3\Rules\DirectSuperglobalsRule
+    - Security\TYPO3\Rules\InsecureFileOperationRule
+    - Security\TYPO3\Rules\FluidViewHelperEscapingRule

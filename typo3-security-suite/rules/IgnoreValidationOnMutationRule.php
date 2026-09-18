@@ -8,6 +8,7 @@ use PhpParser\Node;
 use PhpParser\Node\Stmt\ClassMethod;
 use PHPStan\Analyser\Scope;
 use PHPStan\Rules\Rule;
+use PHPStan\Rules\RuleErrorBuilder;
 
 /**
  * @implements Rule<ClassMethod>
@@ -19,6 +20,9 @@ class IgnoreValidationOnMutationRule implements Rule
         return ClassMethod::class;
     }
 
+    /**
+     * @return list<\PHPStan\Rules\IdentifierRuleError>
+     */
     public function processNode(Node $node, Scope $scope): array
     {
         $methodName = $node->name->toString();
@@ -30,10 +34,12 @@ class IgnoreValidationOnMutationRule implements Rule
         $docComment = $node->getDocComment();
         if ($docComment !== null && str_contains($docComment->getText(), '@ignorevalidation')) {
             return [
-                sprintf(
-                    'SECURITY WARNING [Access Control]: Controller action "%s" uses @ignorevalidation. Unvalidated input in mutating actions can lead to Mass Assignment or Broken Access Control.',
-                    $methodName
-                )
+                RuleErrorBuilder::message(
+                    sprintf(
+                        'SECURITY WARNING [Access Control]: Controller action "%s" uses @ignorevalidation. Unvalidated input in mutating actions can lead to Mass Assignment or Broken Access Control.',
+                        $methodName
+                    )
+                )->identifier(SecurityRuleIdentifier::BROKEN_ACCESS_CONTROL)->build(),
             ];
         }
 
@@ -42,10 +48,12 @@ class IgnoreValidationOnMutationRule implements Rule
                 $attributeName = $attr->name->toString();
                 if (str_contains($attributeName, 'IgnoreValidation')) {
                     return [
-                        sprintf(
-                            'SECURITY WARNING [Access Control]: Controller action "%s" has #[IgnoreValidation] attribute. Ensure authorization and manual checks are present.',
-                            $methodName
-                        )
+                        RuleErrorBuilder::message(
+                            sprintf(
+                                'SECURITY WARNING [Access Control]: Controller action "%s" has #[IgnoreValidation] attribute. Ensure authorization and manual checks are present.',
+                                $methodName
+                            )
+                        )->identifier(SecurityRuleIdentifier::BROKEN_ACCESS_CONTROL)->build(),
                     ];
                 }
             }

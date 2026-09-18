@@ -1,0 +1,31 @@
+{
+  "slug": "broken-access-control-ignorevalidation",
+  "title": "Broken access control in a mutating Extbase action using IgnoreValidation",
+  "finding_type": "BROKEN_ACCESS_CONTROL",
+  "severity": "HIGH",
+  "expected_identifier": "typo3Security.brokenAccessControl",
+  "rule": "Security\\TYPO3\\Rules\\IgnoreValidationOnMutationRule",
+  "root_cause": "A mutating controller action carries #[IgnoreValidation] for the domain object it persists. Property mapping is no longer constrained by the model's validation rules, which enables mass assignment, and the action performs no ownership check before updating the record.",
+  "vulnerable_path": "Vulnerable/Classes/Controller/DirectoryEntryController.php",
+  "secure_path": "Secure/Classes/Controller/DirectoryEntryController.php",
+  "origin": {
+    "kind": "ADVISORY",
+    "advisory_id": "TYPO3-EXT-SA-2026-020",
+    "link": "https://news.typo3.com/security/advisory/typo3-ext-sa-2026-020",
+    "causal_fidelity": "VULNERABILITY_CLASS",
+    "note": "The published advisory names the vulnerability class and the affected extension, not the concrete code location. TYPO3-CORE-SA-2026-023 and TYPO3-EXT-SA-2026-021/023/024/025/026 are classified into the same class and are covered by this single representative fixture rather than by six identical copies.",
+    "also_represents": [
+      "TYPO3-CORE-SA-2026-023",
+      "TYPO3-EXT-SA-2026-021",
+      "TYPO3-EXT-SA-2026-023",
+      "TYPO3-EXT-SA-2026-024",
+      "TYPO3-EXT-SA-2026-025",
+      "TYPO3-EXT-SA-2026-026"
+    ]
+  },
+  "review": {
+    "status": "PENDING",
+    "reviewed_by": null,
+    "reviewed_at": null
+  }
+}

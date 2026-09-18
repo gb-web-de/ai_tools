@@ -32,36 +32,49 @@ try {
 const results = [];
 const rulesMap = new Map();
 
+/**
+ * The security rules emit stable PHPStan error identifiers. Mapping on those
+ * rather than on message substrings means a reworded message can no longer
+ * silently downgrade a finding to the generic code-quality bucket.
+ */
+const RULE_BY_IDENTIFIER = {
+  'typo3Security.sqlInjection': ['typo3.security.sqlInjection', 'error'],
+  'typo3Security.insecureDeserialization': ['typo3.security.remoteCodeExecution', 'error'],
+  'typo3Security.brokenAccessControl': ['typo3.security.brokenAccessControl', 'error'],
+  'typo3Security.xssEcho': ['typo3.security.crossSiteScripting', 'error'],
+  'typo3Security.xssViewHelperEscaping': ['typo3.security.crossSiteScripting', 'error'],
+  'typo3Security.ssrf': ['typo3.security.serverSideRequestForgery', 'error'],
+  'typo3Security.dataLeakage': ['typo3.security.dataLeakage', 'warning'],
+  'typo3Security.insecureFileUpload': ['typo3.security.insecureFileUpload', 'warning'],
+  'typo3Security.directSuperglobals': ['typo3.bestPractice.directSuperglobals', 'note'],
+};
+
+/** Fallback for findings produced before identifiers were introduced. */
+const LEGACY_TAGS = [
+  ['[SQLi]', 'typo3.security.sqlInjection', 'error'],
+  ['[RCE]', 'typo3.security.remoteCodeExecution', 'error'],
+  ['[Access Control]', 'typo3.security.brokenAccessControl', 'error'],
+  ['[ViewHelper XSS]', 'typo3.security.crossSiteScripting', 'error'],
+  ['[XSS]', 'typo3.security.crossSiteScripting', 'error'],
+  ['[SSRF]', 'typo3.security.serverSideRequestForgery', 'error'],
+  ['[Data Leakage]', 'typo3.security.dataLeakage', 'warning'],
+  ['[File Upload]', 'typo3.security.insecureFileUpload', 'warning'],
+  ['[Input Handling]', 'typo3.bestPractice.directSuperglobals', 'note'],
+];
+
+function classify(msg) {
+  const mapped = RULE_BY_IDENTIFIER[msg.identifier];
+  if (mapped) return mapped;
+
+  const legacy = LEGACY_TAGS.find(([tag]) => msg.message.includes(tag));
+  if (legacy) return [legacy[1], legacy[2]];
+
+  return ['typo3.codeQuality', 'warning'];
+}
+
 for (const [filePath, fileInfo] of Object.entries(phpstanData.files || {})) {
   for (const msg of fileInfo.messages || []) {
-    let ruleId = 'typo3.codeQuality';
-    let level = 'warning';
-
-    if (msg.message.includes('[SQLi]')) {
-      ruleId = 'typo3.security.sqlInjection';
-      level = 'error';
-    } else if (msg.message.includes('[RCE]')) {
-      ruleId = 'typo3.security.remoteCodeExecution';
-      level = 'error';
-    } else if (msg.message.includes('[Access Control]')) {
-      ruleId = 'typo3.security.brokenAccessControl';
-      level = 'error';
-    } else if (msg.message.includes('[XSS]') || msg.message.includes('[ViewHelper XSS]')) {
-      ruleId = 'typo3.security.crossSiteScripting';
-      level = 'error';
-    } else if (msg.message.includes('[SSRF]')) {
-      ruleId = 'typo3.security.serverSideRequestForgery';
-      level = 'error';
-    } else if (msg.message.includes('[Data Leakage]')) {
-      ruleId = 'typo3.security.dataLeakage';
-      level = 'warning';
-    } else if (msg.message.includes('[File Upload]')) {
-      ruleId = 'typo3.security.insecureFileUpload';
-      level = 'warning';
-    } else if (msg.message.includes('[Input Handling]')) {
-      ruleId = 'typo3.bestPractice.directSuperglobals';
-      level = 'note';
-    }
+    const [ruleId, level] = classify(msg);
 
     if (!rulesMap.has(ruleId)) {
       rulesMap.set(ruleId, {

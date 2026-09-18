@@ -1,0 +1,18 @@
+{
+  "slug": "insecure-file-upload-move-uploaded-file",
+  "title": "Unrestricted file upload through raw move_uploaded_file()",
+  "finding_type": "FILE_UPLOAD",
+  "severity": "HIGH",
+  "expected_identifier": "typo3Security.insecureFileUpload",
+  "rule": "Security\\TYPO3\\Rules\\InsecureFileOperationRule",
+  "root_cause": "The upload bypasses the File Abstraction Layer and is moved with move_uploaded_file(). TYPO3's fileDenyPattern, MIME-type validation, storage permissions and file name sanitation never run, so an executable file can be written into a web-reachable directory.",
+  "vulnerable_path": "Vulnerable/Classes/Service/AttachmentUploadService.php",
+  "secure_path": "Secure/Classes/Service/AttachmentUploadService.php",
+  "origin": {
+    "kind": "RULE_CONTRACT",
+    "reference": "CLAUDE.md section 6 (TCA & File Upload Security)",
+    "causal_fidelity": "VULNERABILITY_CLASS",
+    "note": "No advisory in the local knowledge store maps to this rule. This pair documents the contract of InsecureFileOperationRule."
+  },
+  "review": { "status": "PENDING", "reviewed_by": null, "reviewed_at": null }
+}

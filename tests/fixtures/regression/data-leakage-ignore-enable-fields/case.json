@@ -1,0 +1,23 @@
+{
+  "slug": "data-leakage-ignore-enable-fields",
+  "title": "Information disclosure through globally disabled enable-field evaluation",
+  "finding_type": "DATA_LEAKAGE",
+  "severity": "HIGH",
+  "expected_identifier": "typo3Security.dataLeakage",
+  "rule": "Security\\TYPO3\\Rules\\ExtbaseQuerySettingsDataLeakRule",
+  "root_cause": "The repository sets setIgnoreEnableFields(true) on its default query settings. Every query issued through this repository then bypasses the deleted, hidden, starttime and endtime restrictions, exposing restricted records to unprivileged callers.",
+  "vulnerable_path": "Vulnerable/Classes/Domain/Repository/TranslationLogRepository.php",
+  "secure_path": "Secure/Classes/Domain/Repository/TranslationLogRepository.php",
+  "origin": {
+    "kind": "ADVISORY",
+    "advisory_id": "TYPO3-CORE-SA-2026-022",
+    "link": "https://news.typo3.com/security/advisory/typo3-core-sa-2026-022",
+    "causal_fidelity": "VULNERABILITY_CLASS",
+    "note": "The published advisory states that information disclosure occurs, without naming the concrete code location. This fixture reproduces the class in an idiomatic Extbase repository; it is not a reconstruction of TYPO3 core code."
+  },
+  "review": {
+    "status": "PENDING",
+    "reviewed_by": null,
+    "reviewed_at": null
+  }
+}

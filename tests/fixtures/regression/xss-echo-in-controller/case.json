@@ -1,0 +1,18 @@
+{
+  "slug": "xss-echo-in-controller",
+  "title": "Reflected XSS through direct echo in an Extbase controller",
+  "finding_type": "XSS",
+  "severity": "HIGH",
+  "expected_identifier": "typo3Security.xssEcho",
+  "rule": "Security\\TYPO3\\Rules\\RawFluidOrEchoXssRule",
+  "root_cause": "The controller writes a request-supplied value into the response body using echo. Fluid's default output escaping never runs, so markup contained in the value is reflected into the rendered page.",
+  "vulnerable_path": "Vulnerable/Classes/Controller/SearchController.php",
+  "secure_path": "Secure/Classes/Controller/SearchController.php",
+  "origin": {
+    "kind": "RULE_CONTRACT",
+    "reference": "CLAUDE.md section 2 (Cross-Site Scripting Prevention)",
+    "causal_fidelity": "VULNERABILITY_CLASS",
+    "note": "The XSS advisory in the local knowledge store (TYPO3-PSA-2024-003) carries no source link and is a synthetic seed. This pair documents the contract of RawFluidOrEchoXssRule instead."
+  },
+  "review": { "status": "PENDING", "reviewed_by": null, "reviewed_at": null }
+}

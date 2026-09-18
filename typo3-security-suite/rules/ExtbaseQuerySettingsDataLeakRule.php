@@ -8,6 +8,7 @@ use PhpParser\Node;
 use PhpParser\Node\Expr\MethodCall;
 use PHPStan\Analyser\Scope;
 use PHPStan\Rules\Rule;
+use PHPStan\Rules\RuleErrorBuilder;
 
 /**
  * @implements Rule<MethodCall>
@@ -19,6 +20,9 @@ class ExtbaseQuerySettingsDataLeakRule implements Rule
         return MethodCall::class;
     }
 
+    /**
+     * @return list<\PHPStan\Rules\IdentifierRuleError>
+     */
     public function processNode(Node $node, Scope $scope): array
     {
         if (!$node->name instanceof Node\Identifier) {
@@ -58,19 +62,23 @@ class ExtbaseQuerySettingsDataLeakRule implements Rule
             // Check for setIgnoreEnableFields(true) or setRespectStoragePage(false)
             if ($methodName === 'setIgnoreEnableFields' && $argValue instanceof Node\Expr\ConstFetch && strtolower($argValue->name->toString()) === 'true') {
                 return [
-                    sprintf(
-                        'SECURITY WARNING [Data Leakage]: Calling %s(true) bypasses deleted, hidden, starttime, and endtime restrictions. This can expose restricted or deleted data to unprivileged users.',
-                        $methodName
-                    )
+                    RuleErrorBuilder::message(
+                        sprintf(
+                            'SECURITY WARNING [Data Leakage]: Calling %s(true) bypasses deleted, hidden, starttime, and endtime restrictions. This can expose restricted or deleted data to unprivileged users.',
+                            $methodName
+                        )
+                    )->identifier(SecurityRuleIdentifier::DATA_LEAKAGE)->build(),
                 ];
             }
 
             if (($methodName === 'setRespectStoragePage' || $methodName === 'setRespectSysLanguage') && $argValue instanceof Node\Expr\ConstFetch && strtolower($argValue->name->toString()) === 'false') {
                 return [
-                    sprintf(
-                        'SECURITY WARNING [Data Leakage]: Calling %s(false) disables storage PID or language isolation. Ensure tenant separation is not compromised.',
-                        $methodName
-                    )
+                    RuleErrorBuilder::message(
+                        sprintf(
+                            'SECURITY WARNING [Data Leakage]: Calling %s(false) disables storage PID or language isolation. Ensure tenant separation is not compromised.',
+                            $methodName
+                        )
+                    )->identifier(SecurityRuleIdentifier::DATA_LEAKAGE)->build(),
                 ];
             }
         }

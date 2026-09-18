@@ -106,9 +106,15 @@ npm run knowledge:query -- --query "Mandantentrennung"
 
 # Aus wiederholt freigegebenen Fixes getestete Rector-Kandidaten erzeugen
 npm run learn:rector
+
+# Regressionsfixtures der Sicherheitsregeln prüfen und Review-Stand ansehen
+npm run test:regression
+npm run fixtures:status
 ```
 
-Der Advisory-Distiller übernimmt nur bekannte Schwachstellenklassen in ausführbare Test-Fixtures. Unbekannte Kategorien bleiben als `UNCLASSIFIED` im Wissensspeicher und müssen vor einer Regelerzeugung menschlich geprüft werden.
+Der Advisory-Distiller klassifiziert nur bekannte Schwachstellenklassen. Unbekannte Kategorien bleiben als `UNCLASSIFIED` im Wissensspeicher und müssen vor einer Regelerzeugung menschlich geprüft werden. Automatisch erzeugte Entwürfe landen ungetrackt unter `var/advisory-drafts/` – sie sind klassifizierte Vorschläge, kein Sicherheitsnachweis.
+
+Belastbar wird ein Fall erst als Fixture-Paar unter `tests/fixtures/regression/<slug>/`: ein realistisches verwundbares Beispiel und ein fachlich gleichwertiges sicheres Gegenbeispiel, geprüft gegen den stabilen Error-Identifier der zuständigen PHPStan-Regel. Das verwundbare Beispiel muss erkannt werden, das sichere muss befundfrei bleiben. Herkunft und Review-Status sind Pflichtfelder und werden schema-validiert.
 
 Meilenstein 3 bringt außerdem einen GitHub-PR-Bot mit Patch-Artefakten und Inline-Vorschlägen. Die unterstützten Muster, Review-Voraussetzungen und Einrichtung der Workflows stehen in [docs/CONTINUOUS_LEARNING.md](docs/CONTINUOUS_LEARNING.md).
 

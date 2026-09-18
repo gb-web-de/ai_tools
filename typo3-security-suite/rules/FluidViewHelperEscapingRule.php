@@ -8,6 +8,7 @@ use PhpParser\Node;
 use PhpParser\Node\Stmt\Property;
 use PHPStan\Analyser\Scope;
 use PHPStan\Rules\Rule;
+use PHPStan\Rules\RuleErrorBuilder;
 
 /**
  * @implements Rule<Property>
@@ -19,6 +20,9 @@ class FluidViewHelperEscapingRule implements Rule
         return Property::class;
     }
 
+    /**
+     * @return list<\PHPStan\Rules\IdentifierRuleError>
+     */
     public function processNode(Node $node, Scope $scope): array
     {
         $file = $scope->getFile();
@@ -31,10 +35,12 @@ class FluidViewHelperEscapingRule implements Rule
             if ($name === 'escapeOutput' || $name === 'escapeChildren') {
                 if ($prop->default instanceof Node\Expr\ConstFetch && strtolower($prop->default->name->toString()) === 'false') {
                     return [
-                        sprintf(
-                            'SECURITY WARNING [ViewHelper XSS]: Custom ViewHelper sets "$%s = false;". Disabling output/children escaping exposes templates to Cross-Site Scripting. Ensure all dynamic data is strictly sanitized using SanitizerBuilder or HTMLSpecialChars.',
-                            $name
-                        )
+                        RuleErrorBuilder::message(
+                            sprintf(
+                                'SECURITY WARNING [ViewHelper XSS]: Custom ViewHelper sets "$%s = false;". Disabling output/children escaping exposes templates to Cross-Site Scripting. Ensure all dynamic data is strictly sanitized using SanitizerBuilder or HTMLSpecialChars.',
+                                $name
+                            )
+                        )->identifier(SecurityRuleIdentifier::XSS_VIEWHELPER_ESCAPING)->build(),
                     ];
                 }
             }

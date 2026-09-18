@@ -1,7 +1,7 @@
 # Autonome & Selbstlernende TYPO3 AI-Sicherheitsarchitektur
 ## Master-Dokumentation: Continuous Learning, Vulnerability Intelligence & Self-Healing
 
-> **Status:** Meilensteine 1–3 implementiert; Meilensteine 4–5 geplant; L4/L5 bleiben schrittweise auszubauen
+> **Status:** Meilensteine 1–4 implementiert (Meilenstein 4 wartet noch auf das menschliche Review der Fixtures); Meilenstein 5 geplant; L4/L5 bleiben schrittweise auszubauen
 > **Zielsysteme:** TYPO3 v12 / v13 / v14  
 > **Integrationen:** Model Context Protocol (MCP), Cursor, Claude Code, Windsurf, GitHub Copilot, PHPStan AST, Rector  
 
@@ -177,9 +177,11 @@ Ein Skript, das die TYPO3 RSS-Advisories durchläuft und zunächst deterministis
 //    - Angriffsvektor: Ungeschützte OrderBy-Klausel
 //    - Code vorher: $queryBuilder->orderBy($userInput)
 //    - Code nachher: In-Array-Whitelist-Validierung
-// 3. Schreibe Testfall nach tests/fixtures/learned/TYPO3-EXT-SA-2026-004.php
-// 4. Ergänze ai-rules/01-security.md um den neuen Fallstrick
-// 5. Triggere npm run sync-ai
+// 3. Lege einen EXPERIMENTAL-Entwurf unter var/advisory-drafts/ ab (ungetrackt)
+// 4. Human Review: realistisches Paar unter tests/fixtures/regression/<slug>/
+//    mit case.json anlegen; erst der Regressionstest macht daraus einen Nachweis
+// 5. Ergänze ai-rules/01-security.md um den neuen Fallstrick
+// 6. Triggere npm run sync-ai
 ```
 
 ### Baustein 2: Lokaler Knowledge-Store (`.typo3-knowledge/`)
@@ -224,18 +226,27 @@ Implementierte MCP-Schnittstellen:
 
 Betrieb, Befehle, Voraussetzungen und die genauen Grenzen sind in [CONTINUOUS_LEARNING.md](CONTINUOUS_LEARNING.md) beschrieben. Die Workflows sind lokal vorbereitet und getestet; eine echte Veröffentlichung auf GitHub erfolgt erst nach Aufnahme in den Default-Branch. Freie LLM-Regelsynthese, Embedding-Suche und vollautonome Patch-Freigabe gehören weiterhin nicht zum implementierten Umfang.
 
-### Meilenstein 4 (Geplant: Belastbare Advisory-Regressionstests)
+### Meilenstein 4 (Implementiert: 18.09.2026 – Belastbare Advisory-Regressionstests)
 
-Die automatisch erzeugten Einzeiler unter `tests/fixtures/learned/` sind zunächst nur klassifizierte Entwürfe. Sie bilden weder zwingend die konkrete Ursache einer veröffentlichten Schwachstelle ab noch sind sie ohne Test-Harness ein belastbarer Sicherheitsnachweis. Solche generischen Entwürfe werden nicht versioniert oder zu `STRICT` befördert.
+Die zuvor automatisch erzeugten Einzeiler unter `tests/fixtures/learned/` waren nur klassifizierte Entwürfe: generische Code-Zeilen ohne Bezug zur dokumentierten Ursache und ohne Test-Harness. Eine Messung zeigte, dass von 14 versionierten Fixtures nur 2 überhaupt von einer PHPStan-Regel erkannt wurden – sie waren damit kein Sicherheitsnachweis. Sie wurden entfernt und durch geprüfte Paare ersetzt.
 
-* [ ] Für jedes unterstützte Advisory ein realistisches verwundbares Codebeispiel erstellen, das die dokumentierte technische Ursache mit nachvollziehbarer Herkunft abbildet.
-* [ ] Zu jedem verwundbaren Beispiel ein fachlich gleichwertiges, sicheres Gegenbeispiel bereitstellen.
-* [ ] Beide Beispiele automatisiert gegen die zuständige PHPStan-Regel testen: Das verwundbare Beispiel muss mit dem erwarteten Error-Identifier erkannt werden, das sichere Beispiel muss ohne diesen Befund bleiben.
-* [ ] Generische, nicht geprüfte Einzeiler nur als temporäre `EXPERIMENTAL`-Entwürfe behandeln und nicht in `tests/fixtures/learned/` committen.
-* [ ] Human Review und Quellenangabe verpflichtend machen, bevor ein Fixture-Paar versioniert und für CI- oder Regelerzeugung verwendet wird.
-* [ ] Bestehende versionierte `TYPO3-PSA-2024-*`-Fixtures nach denselben Kriterien prüfen, ergänzen oder entfernen.
+* [x] Stabile Error-Identifier (`typo3Security.*`) für alle neun Regeln, zentral in `rules/SecurityRuleIdentifier.php`. Sie sind der Vertrag zwischen Regeln, Regressionstests und SARIF-Export; Meldungstexte dürfen sich ändern, Identifier nicht.
+* [x] Für jede Regel ein realistisches verwundbares Codebeispiel in idiomatischer TYPO3-Struktur (`Classes/Controller`, `Classes/Domain/Repository`, `Classes/ViewHelpers`, `Classes/Service`) mit echten TYPO3-Typen statt generischer `object`-Parameter.
+* [x] Zu jedem verwundbaren Beispiel ein fachlich gleichwertiges, sicheres Gegenbeispiel.
+* [x] Automatisierter Regressionstest (`npm run test:regression`): Das verwundbare Beispiel muss mit dem erwarteten Identifier erkannt werden und darf keine fremde Sicherheitsregel auslösen; das sichere Gegenbeispiel muss ohne Sicherheitsbefund bleiben; beide müssen frei von allgemeinen Analysefehlern sein.
+* [x] Generische Einzeiler landen als `EXPERIMENTAL`-Entwürfe in `var/advisory-drafts/` (ungetrackt) und weisen sich im Dateikopf selbst als nicht committierbar aus.
+* [x] Herkunft ist Pflicht und wird schema-validiert: `origin.kind=ADVISORY` verlangt Advisory-ID und https-Link, `origin.kind=RULE_CONTRACT` eine benannte Referenz. `causal_fidelity` trennt „bildet die dokumentierte Ursache ab“ von „bildet die Schwachstellenklasse ab“; die stärkere Behauptung verlangt den belegten Ursachentext.
+* [x] Review-Status je Fixture mit CLI-Übersicht (`npm run fixtures:status`) und Gate-Option `--require-approved`.
+* [x] Bestehende `TYPO3-PSA-2024-*`-Fixtures geprüft und entfernt: Diese Seeds tragen CVE-Platzhalter und keinen Quell-Link, erfüllen die Herkunftspflicht also nicht.
 
-**Abnahmekriterien:** Jedes versionierte Learned-Fixture besitzt ein verwundbares und ein sicheres Gegenbeispiel sowie einen ausführbaren Regressionstest gegen eine konkrete PHPStan-Regel. Der Test schlägt fehl, wenn die Regel das verwundbare Beispiel nicht erkennt oder beim sicheren Beispiel anschlägt. Nicht validierte Einzeiler gelangen weder in Git noch in den Status `STRICT`.
+**Zwei Befunde aus der Umsetzung, die eigene Korrekturen erforderten:**
+
+1. **PHPStans Result-Cache invalidiert nicht bei Änderungen an den Regel-Klassen.** Ein Mutationstest (Erkennung der Concat-Prüfung deaktiviert) blieb zunächst grün, weil zwischengespeicherte Befunde einer Regel gemeldet wurden, die nichts mehr erkennt. Der Harness nutzt daher einen isolierten Cache (`tmpDir`), den er vor jedem Lauf verwirft. Ohne das wäre die Testsuite in CI still falsch-grün gewesen.
+2. **Die SSRF-Regel konnte validierte nicht von unvalidierten dynamischen URLs unterscheiden**, ein gleichwertiges sicheres Gegenbeispiel war damit unmöglich. Sie meldet jetzt keinen Befund mehr, wenn die statische Analyse das Ziel auf eine feste Menge konstanter Strings auflöst – das deckt die übliche Härtung per Endpunkt-Allowlist ab und senkt die False-Positive-Rate.
+
+**Abnahmekriterien – Nachweis:** Jedes versionierte Fixture besitzt ein verwundbares und ein sicheres Gegenbeispiel sowie einen ausführbaren Regressionstest gegen eine konkrete PHPStan-Regel. Beide Fehlerrichtungen wurden per Mutationstest belegt: Wird die Erkennung deaktiviert, schlägt der Vulnerable-Test fehl; meldet die Regel pauschal, schlägt der Secure-Test fehl. Nicht validierte Einzeiler gelangen weder in Git noch in den Status `STRICT`.
+
+**Noch offen:** Alle neun Fixture-Paare stehen auf `PENDING`. Das Review ist ausdrücklich eine menschliche Aufgabe und kann nicht durch den Autor der Fixtures erfolgen. Bis dahin bleibt der CI-Schritt informativ; nach dem Review kann er über `--require-approved` scharf geschaltet werden. Alle advisory-gebundenen Fixtures tragen `causal_fidelity: VULNERABILITY_CLASS`, weil die veröffentlichten Advisory-Texte die Schwachstellenklasse benennen, nicht die konkrete Codestelle – eine Höherstufung auf `DOCUMENTED_ROOT_CAUSE` setzt den belegten Ursachentext voraus.
 
 ### Meilenstein 5 (Geplant: Wissensgraph im Team und projektübergreifend teilen)
 

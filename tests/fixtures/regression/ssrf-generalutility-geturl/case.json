@@ -1,0 +1,18 @@
+{
+  "slug": "ssrf-generalutility-geturl",
+  "title": "Server-side request forgery through a caller-controlled request target",
+  "finding_type": "SSRF",
+  "severity": "HIGH",
+  "expected_identifier": "typo3Security.ssrf",
+  "rule": "Security\\TYPO3\\Rules\\SsrfGeneralUtilityGetUrlRule",
+  "root_cause": "A caller-supplied string is used directly as the target of GeneralUtility::getUrl(). Because neither scheme nor host is constrained, the request can be redirected at link-local metadata endpoints, localhost services, or hosts inside the private network, and the response is returned to the caller.",
+  "vulnerable_path": "Vulnerable/Classes/Service/FeedImportService.php",
+  "secure_path": "Secure/Classes/Service/FeedImportService.php",
+  "origin": {
+    "kind": "RULE_CONTRACT",
+    "reference": "SsrfGeneralUtilityGetUrlRule; OWASP A10:2021 Server-Side Request Forgery",
+    "causal_fidelity": "VULNERABILITY_CLASS",
+    "note": "The SSRF advisory in the local knowledge store (TYPO3-PSA-2024-005) carries no source link and is a synthetic seed. This pair documents the contract of SsrfGeneralUtilityGetUrlRule, including its allow-list exemption: a target that static analysis resolves to a fixed set of constant strings is not reported."
+  },
+  "review": { "status": "PENDING", "reviewed_by": null, "reviewed_at": null }
+}

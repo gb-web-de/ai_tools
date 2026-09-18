@@ -1,6 +1,6 @@
 # Continuous Learning: Betrieb und Grenzen
 
-Meilenstein 3 verbindet lokale Wissenssuche, reviewbasierte Rector-Kandidaten und GitHub-Review-Vorschläge. Benötigt werden Node.js 20+ und PHP; die Regressionstests verwenden die im Composer-Lockfile festgelegte Security-Suite. Der aktuelle Lockfile wird in CI mit PHP 8.5 geprüft.
+Meilenstein 3 verbindet lokale Wissenssuche, reviewbasierte Rector-Kandidaten und GitHub-Review-Vorschläge. Meilenstein 4 ergänzt geprüfte Regressionsfixtures mit stabilen Error-Identifiern. Benötigt werden Node.js 20+ und PHP; die Regressionstests verwenden die im Composer-Lockfile festgelegte Security-Suite. Der aktuelle Lockfile wird in CI mit PHP 8.5 geprüft.
 
 ## Lokaler Wissensgraph
 
@@ -86,8 +86,46 @@ git apply --check --unidiff-zero .cache/security-review/security-fixes.patch
 
 Das CLI vergleicht mit dem gemeinsamen Vorfahren der beiden Commits und verändert den Checkout nicht. Vorschläge müssen fachlich geprüft und manuell angenommen werden. Repository-Richtlinien müssen dem Reviewer `pull-requests: write` erlauben; keine automatische Merge- oder Commit-Aktion ist eingerichtet.
 
+## Regressionsfixtures für Sicherheitsregeln
+
+Jede PHPStan-Sicherheitsregel besitzt ein Fixture-Paar unter `tests/fixtures/regression/<slug>/`: ein realistisches verwundbares Beispiel und ein fachlich gleichwertiges sicheres Gegenbeispiel in idiomatischer TYPO3-Struktur.
+
+```bash
+npm run test:regression
+npm run fixtures:status
+npm run fixtures:status -- --json
+```
+
+```
+tests/fixtures/regression/<slug>/
+├── case.json
+├── Vulnerable/Classes/<TYPO3-Pfad>/<Klasse>.php
+└── Secure/Classes/<TYPO3-Pfad>/<Klasse>.php
+```
+
+Der Pfad ist Teil des Testaufbaus, nicht Kosmetik: Mehrere Regeln werten den Dateipfad aus (`Classes/Controller`, `Classes/Middleware`, `Classes/Service`, `ViewHelpers`). Ein Beispiel außerhalb dieser Struktur wird von der zuständigen Regel nicht erkannt.
+
+`case.json` beschreibt Regel, erwarteten Identifier, Ursache, Herkunft und Review-Status. Das Schema wird beim Testlauf validiert:
+
+* `expected_identifier` muss in `rules/SecurityRuleIdentifier.php` definiert sein. Ein Test gegen einen Identifier, den keine Regel ausgeben kann, ist damit ausgeschlossen.
+* `origin.kind=ADVISORY` verlangt `advisory_id` und einen https-Link; `origin.kind=RULE_CONTRACT` verlangt eine benannte `reference`.
+* `origin.causal_fidelity` trennt `DOCUMENTED_ROOT_CAUSE` (Beispiel bildet die im Advisory beschriebene Ursache ab, belegt durch `origin.documented_cause`) von `VULNERABILITY_CLASS` (Beispiel bildet die Schwachstellenklasse ab). Die stärkere Behauptung ohne Belegtext lässt der Test nicht zu.
+* `review.status=APPROVED` verlangt `reviewed_by` und `reviewed_at`.
+
+Der Test prüft je Paar drei Aussagen: Das verwundbare Beispiel wird mit dem erwarteten Identifier erkannt und löst keine fremde Sicherheitsregel aus; das sichere Gegenbeispiel bleibt ohne Sicherheitsbefund; beide bleiben frei von allgemeinen Analysefehlern. Zusätzlich muss jeder deklarierte Identifier ein Paar besitzen, und keine PHP-Datei unter dem Fixture-Baum darf außerhalb eines Falls mit `case.json` liegen.
+
+Die Analyse läuft über `typo3-security-suite/phpstan-fixtures.neon` auf Level 0, damit ein Ergebnis ausschließlich Sicherheitsbefunde enthält – nur so ist die negative Aussage über das sichere Beispiel belastbar. Der Harness verwirft vor jedem Lauf den isolierten Result-Cache (`typo3-security-suite/var/phpstan-fixtures-cache`): PHPStans Cache invalidiert **nicht** bei Änderungen an den Regel-Klassen, ein zwischengespeicherter Lauf würde also weiter Befunde einer Regel melden, die nichts mehr erkennt.
+
+### Grenzen
+
+Die Fixtures belegen das Verhalten der Regeln, nicht die Ausnutzbarkeit einer konkreten veröffentlichten Schwachstelle. Advisory-gebundene Paare tragen derzeit durchgehend `VULNERABILITY_CLASS`, weil die Advisory-Texte im Wissensspeicher die Schwachstellenklasse und die betroffene Extension nennen, nicht die konkrete Codestelle. Ein Fixture ist keine Rekonstruktion fremden Codes. Ein `PENDING`-Paar ist ein Vorschlag, kein freigegebener Nachweis.
+
+### Advisory-Entwürfe
+
+`npm run learn:advisories` legt generische Entwürfe unter `var/advisory-drafts/` ab. Dieses Verzeichnis ist nicht versioniert, und jeder Entwurf weist sich im Dateikopf als nicht committierbar aus. Ein Entwurf wird erst dadurch zum Nachweis, dass jemand daraus ein realistisches Paar mit `case.json` baut und der Regressionstest beide Richtungen bestätigt.
+
 ## Verifikation
 
-`npm test` prüft Advisory-Import, Wissensgraph, MCP-Feedback, echte Rector-Transformationen, Git-Patch-Anwendbarkeit und den Review-Lebenszyklus mit simulierten GitHub-Antworten. Dazu kommt die bestehende PHPStan-Prüfung der Regeln. `learning-tests.yml` führt diesen Ablauf in CI aus. `npm run sync-ai` bleibt ein separates Kommando, damit Tests keine lokalen Editor-Konfigurationen überschreiben.
+`npm test` prüft Advisory-Import, Wissensgraph, MCP-Feedback, echte Rector-Transformationen, Git-Patch-Anwendbarkeit, den Review-Lebenszyklus mit simulierten GitHub-Antworten und die Regressionsfixtures aller Sicherheitsregeln. Dazu kommt die bestehende PHPStan-Prüfung der Regeln. Dass die Regressionstests tatsächlich greifen, wurde per Mutationstest in beide Richtungen belegt: Erkennung deaktiviert lässt den Vulnerable-Test fehlschlagen, pauschales Melden den Secure-Test. `learning-tests.yml` führt diesen Ablauf in CI aus. `npm run sync-ai` bleibt ein separates Kommando, damit Tests keine lokalen Editor-Konfigurationen überschreiben.
 
 Referenzen: [Rector: Custom Rules](https://getrector.com/documentation/custom-rule), [GitHub: sichere Workflows](https://docs.github.com/en/actions/reference/security/secure-use), [GitHub: Pull Request Reviews](https://docs.github.com/en/rest/pulls/reviews).

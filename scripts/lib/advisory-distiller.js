@@ -126,7 +126,7 @@ function phpString(value) {
   return value.replaceAll("\\", "\\\\").replaceAll("'", "\\'");
 }
 
-export function fixtureFor(advisory) {
+export function draftFixtureFor(advisory) {
   if (advisory.confidence !== "EXPERIMENTAL" || !advisory.vulnerable_code) return null;
 
   const classSuffix = advisory.id.replace(/[^A-Za-z0-9]/gu, "_");
@@ -138,9 +138,16 @@ declare(strict_types=1);
 namespace Typo3SecuritySuite\\Tests\\Fixtures\\Learned;
 
 /**
- * Experimental vulnerable fixture for ${advisory.id}.
+ * EXPERIMENTAL DRAFT for ${advisory.id} - do not commit this file.
+ *
  * Source title: ${title}
- * This file is test input and must never be used in production.
+ *
+ * This is a generic one-liner derived from the advisory's vulnerability class,
+ * not from its documented root cause, and no rule has been shown to detect it.
+ * It is therefore not evidence of anything. To turn it into a regression case,
+ * follow docs/CONTINUOUS_LEARNING.md: write a realistic vulnerable example and
+ * an equivalent secure counterpart under tests/fixtures/regression/<slug>/ with
+ * a reviewed case.json. This file is test input and must never run in production.
  */
 final class ${classSuffix}
 {
@@ -154,10 +161,10 @@ final class ${classSuffix}
 
 export function persistLearning(advisories, options) {
   const knowledgeFile = path.join(options.knowledgeDir, "advisories.json");
-  const fixturesDir = options.fixturesDir;
+  const draftsDir = options.draftsDir;
   const existing = fs.existsSync(knowledgeFile) ? JSON.parse(fs.readFileSync(knowledgeFile, "utf8")) : [];
   const byId = new Map(existing.map((item) => [item.id, item]));
-  const createdFixtures = [];
+  const createdDrafts = [];
 
   for (const advisory of advisories) {
     const existingAdvisory = byId.get(advisory.id);
@@ -167,13 +174,13 @@ export function persistLearning(advisories, options) {
       vulnerable_code: existingAdvisory?.vulnerable_code || advisory.vulnerable_code,
       secure_code: existingAdvisory?.secure_code || advisory.secure_code,
     });
-    const fixture = fixtureFor(advisory);
+    const fixture = draftFixtureFor(advisory);
     if (!fixture) continue;
     const filename = `${advisory.id.replace(/[^A-Za-z0-9._-]/gu, "_")}.php`;
-    createdFixtures.push(filename);
+    createdDrafts.push(filename);
     if (!options.dryRun) {
-      fs.mkdirSync(fixturesDir, { recursive: true });
-      fs.writeFileSync(path.join(fixturesDir, filename), fixture, "utf8");
+      fs.mkdirSync(draftsDir, { recursive: true });
+      fs.writeFileSync(path.join(draftsDir, filename), fixture, "utf8");
     }
   }
 
@@ -183,5 +190,5 @@ export function persistLearning(advisories, options) {
     fs.writeFileSync(knowledgeFile, `${JSON.stringify(sorted, null, 2)}\n`, "utf8");
   }
 
-  return { stored: advisories.length, createdFixtures };
+  return { stored: advisories.length, createdDrafts };
 }

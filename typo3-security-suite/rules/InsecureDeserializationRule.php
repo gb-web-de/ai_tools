@@ -8,6 +8,7 @@ use PhpParser\Node;
 use PhpParser\Node\Expr\FuncCall;
 use PHPStan\Analyser\Scope;
 use PHPStan\Rules\Rule;
+use PHPStan\Rules\RuleErrorBuilder;
 
 /**
  * @implements Rule<FuncCall>
@@ -19,6 +20,9 @@ class InsecureDeserializationRule implements Rule
         return FuncCall::class;
     }
 
+    /**
+     * @return list<\PHPStan\Rules\IdentifierRuleError>
+     */
     public function processNode(Node $node, Scope $scope): array
     {
         if (!$node->name instanceof Node\Name) {
@@ -38,14 +42,18 @@ class InsecureDeserializationRule implements Rule
         // Check if options argument exists
         if (count($args) < 2) {
             return [
-                'SECURITY CRITICAL [RCE]: Calling unserialize() without options array. Untrusted input can trigger Insecure Deserialization and Remote Code Execution. Use json_decode() or pass [\'allowed_classes\' => false].'
+                RuleErrorBuilder::message(
+                    'SECURITY CRITICAL [RCE]: Calling unserialize() without options array. Untrusted input can trigger Insecure Deserialization and Remote Code Execution. Use json_decode() or pass [\'allowed_classes\' => false].'
+                )->identifier(SecurityRuleIdentifier::INSECURE_DESERIALIZATION)->build(),
             ];
         }
 
         $optionsArg = $args[1]->value;
         if (!$optionsArg instanceof Node\Expr\Array_) {
             return [
-                'SECURITY WARNING [RCE]: Calling unserialize() with dynamic options argument. Ensure \'allowed_classes\' is strictly set to false.'
+                RuleErrorBuilder::message(
+                    'SECURITY WARNING [RCE]: Calling unserialize() with dynamic options argument. Ensure \'allowed_classes\' is strictly set to false.'
+                )->identifier(SecurityRuleIdentifier::INSECURE_DESERIALIZATION)->build(),
             ];
         }
 
@@ -63,7 +71,9 @@ class InsecureDeserializationRule implements Rule
 
         if (!$hasAllowedClassesFalse) {
             return [
-                'SECURITY CRITICAL [RCE]: Insecure unserialize() detected. \'allowed_classes\' must be explicitly set to false to prevent Object Injection attacks.'
+                RuleErrorBuilder::message(
+                    'SECURITY CRITICAL [RCE]: Insecure unserialize() detected. \'allowed_classes\' must be explicitly set to false to prevent Object Injection attacks.'
+                )->identifier(SecurityRuleIdentifier::INSECURE_DESERIALIZATION)->build(),
             ];
         }
 

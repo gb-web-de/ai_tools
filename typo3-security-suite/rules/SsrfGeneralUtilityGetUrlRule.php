@@ -8,6 +8,7 @@ use PhpParser\Node;
 use PhpParser\Node\Expr\StaticCall;
 use PHPStan\Analyser\Scope;
 use PHPStan\Rules\Rule;
+use PHPStan\Rules\RuleErrorBuilder;
 
 /**
  * @implements Rule<StaticCall>
@@ -19,6 +20,9 @@ class SsrfGeneralUtilityGetUrlRule implements Rule
         return StaticCall::class;
     }
 
+    /**
+     * @return list<\PHPStan\Rules\IdentifierRuleError>
+     */
     public function processNode(Node $node, Scope $scope): array
     {
         if (!$node->name instanceof Node\Identifier) {
@@ -49,9 +53,19 @@ class SsrfGeneralUtilityGetUrlRule implements Rule
             return [];
         }
 
+        // If static analysis can resolve the argument to a fixed set of constant
+        // strings, the target is not attacker-controlled either. This covers the
+        // idiomatic hardening pattern of mapping user input through an allow-list
+        // of configured endpoints before the request is issued.
+        if ($scope->getType($urlArg)->getConstantStrings() !== []) {
+            return [];
+        }
+
         // Variable, method call, or concatenation
         return [
-            'SECURITY WARNING [SSRF]: Dynamic URL passed to GeneralUtility::getUrl(). If this URL originates from user input or external data, validate and whitelist the host to prevent Server-Side Request Forgery (SSRF).'
+            RuleErrorBuilder::message(
+                'SECURITY WARNING [SSRF]: Dynamic URL passed to GeneralUtility::getUrl(). If this URL originates from user input or external data, validate and whitelist the host to prevent Server-Side Request Forgery (SSRF).'
+            )->identifier(SecurityRuleIdentifier::SSRF)->build(),
         ];
     }
 }

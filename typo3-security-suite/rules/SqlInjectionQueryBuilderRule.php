@@ -8,6 +8,7 @@ use PhpParser\Node;
 use PhpParser\Node\Expr\MethodCall;
 use PHPStan\Analyser\Scope;
 use PHPStan\Rules\Rule;
+use PHPStan\Rules\RuleErrorBuilder;
 
 /**
  * @implements Rule<MethodCall>
@@ -19,6 +20,9 @@ class SqlInjectionQueryBuilderRule implements Rule
         return MethodCall::class;
     }
 
+    /**
+     * @return list<\PHPStan\Rules\IdentifierRuleError>
+     */
     public function processNode(Node $node, Scope $scope): array
     {
         if (!$node->name instanceof Node\Identifier) {
@@ -50,13 +54,17 @@ class SqlInjectionQueryBuilderRule implements Rule
 
             if ($argValue instanceof Node\Expr\BinaryOp\Concat) {
                 return [
-                    'SECURITY ERROR [SQLi]: Potential SQL Injection detected in QueryBuilder method. Direct string concatenation found. Use $queryBuilder->createNamedParameter() or expression builders instead.'
+                    RuleErrorBuilder::message(
+                        'SECURITY ERROR [SQLi]: Potential SQL Injection detected in QueryBuilder method. Direct string concatenation found. Use $queryBuilder->createNamedParameter() or expression builders instead.'
+                    )->identifier(SecurityRuleIdentifier::SQL_INJECTION)->build(),
                 ];
             }
 
             if ($argValue instanceof Node\Scalar\Encapsed) {
                 return [
-                    'SECURITY ERROR [SQLi]: Potential SQL Injection detected. Variable interpolation in SQL statement found. Use $queryBuilder->createNamedParameter().'
+                    RuleErrorBuilder::message(
+                        'SECURITY ERROR [SQLi]: Potential SQL Injection detected. Variable interpolation in SQL statement found. Use $queryBuilder->createNamedParameter().'
+                    )->identifier(SecurityRuleIdentifier::SQL_INJECTION)->build(),
                 ];
             }
         }

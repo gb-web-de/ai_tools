@@ -25,3 +25,8 @@ jobs:
       - run: npm ci --prefix typo3-mcp-server --workspaces=false --ignore-scripts
       - run: composer install --working-dir=typo3-security-suite --no-interaction --prefer-dist --no-plugins --no-scripts
       - run: npm test
+      # Informational: shows which regression fixtures still lack a human
+      # sign-off. Switch to `npm run fixtures:status -- --require-approved` once
+      # the corpus has been reviewed, to keep unreviewed pairs out of the gate.
+      - name: Fixture review status
+        run: npm run fixtures:status

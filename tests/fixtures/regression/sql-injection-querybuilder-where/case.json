@@ -1,0 +1,23 @@
+{
+  "slug": "sql-injection-querybuilder-where",
+  "title": "SQL Injection through string concatenation in QueryBuilder::where()",
+  "finding_type": "SQL_INJECTION",
+  "severity": "CRITICAL",
+  "expected_identifier": "typo3Security.sqlInjection",
+  "rule": "Security\\TYPO3\\Rules\\SqlInjectionQueryBuilderRule",
+  "root_cause": "A request-supplied value is concatenated into the WHERE clause of a QueryBuilder query instead of being bound via createNamedParameter(). The value becomes part of the SQL string, so an attacker controls the query structure.",
+  "vulnerable_path": "Vulnerable/Classes/Domain/Repository/FormAnswerRepository.php",
+  "secure_path": "Secure/Classes/Domain/Repository/FormAnswerRepository.php",
+  "origin": {
+    "kind": "ADVISORY",
+    "advisory_id": "TYPO3-EXT-SA-2026-027",
+    "link": "https://news.typo3.com/security/advisory/typo3-ext-sa-2026-027",
+    "causal_fidelity": "VULNERABILITY_CLASS",
+    "note": "The published advisory names the vulnerability class and the affected extension, not the concrete code location. This fixture reproduces the class in an idiomatic TYPO3 repository; it is not a reconstruction of the vendor's actual code."
+  },
+  "review": {
+    "status": "PENDING",
+    "reviewed_by": null,
+    "reviewed_at": null
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "slug": "insecure-deserialization-unserialize",
+  "title": "PHP object injection through unserialize() on untrusted input",
+  "finding_type": "DESERIALIZATION",
+  "severity": "CRITICAL",
+  "expected_identifier": "typo3Security.insecureDeserialization",
+  "rule": "Security\\TYPO3\\Rules\\InsecureDeserializationRule",
+  "root_cause": "Untrusted data is passed to unserialize() without an options array restricting allowed_classes. Any autoloadable class can be instantiated, so a magic method chain (__wakeup / __destruct / __toString) can be leveraged into remote code execution.",
+  "vulnerable_path": "Vulnerable/Classes/Service/SessionPayloadService.php",
+  "secure_path": "Secure/Classes/Service/SessionPayloadService.php",
+  "origin": {
+    "kind": "RULE_CONTRACT",
+    "reference": "CLAUDE.md section 4 (Insecure Deserialization & Remote Code Execution)",
+    "causal_fidelity": "VULNERABILITY_CLASS",
+    "note": "No advisory in the local knowledge store is classified as DESERIALIZATION. This pair documents the contract of InsecureDeserializationRule and is not tied to a published advisory."
+  },
+  "review": { "status": "PENDING", "reviewed_by": null, "reviewed_at": null }
+}

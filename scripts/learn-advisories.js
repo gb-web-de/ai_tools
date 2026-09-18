@@ -47,7 +47,9 @@ async function main() {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   const result = persistLearning(advisories, {
     knowledgeDir: path.join(root, ".typo3-knowledge"),
-    fixturesDir: path.join(root, "tests/fixtures/learned"),
+    // Generic drafts stay out of the versioned fixture tree: only a reviewed
+    // vulnerable/secure pair under tests/fixtures/regression/ may be committed.
+    draftsDir: path.join(root, "var/advisory-drafts"),
     dryRun: options.dryRun,
   });
 
