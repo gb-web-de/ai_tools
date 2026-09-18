@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 
 import process from 'node:process';
+import { parseArgs } from 'node:util';
 import { loadCases, declaredIdentifiers, effectiveStatus } from './lib/regression-fixtures.js';
+import { resolveLanguage, translator } from './lib/i18n.js';
 
 /**
  * Reports the human-review state of the versioned regression fixtures.
@@ -18,8 +20,13 @@ import { loadCases, declaredIdentifiers, effectiveStatus } from './lib/regressio
  * --require-approved exits non-zero while any case is PENDING or STALE. Use it
  * in pipelines that must not consume unreviewed fixtures.
  */
-const requireApproved = process.argv.includes('--require-approved');
-const asJson = process.argv.includes('--json');
+const { values } = parseArgs({ options: {
+  'require-approved': { type: 'boolean' },
+  json: { type: 'boolean' },
+  lang: { type: 'string' },
+} });
+
+const t = translator(resolveLanguage(values.lang));
 
 const cases = loadCases().map((entry) => ({ ...entry, status: effectiveStatus(entry) }));
 const byStatus = { APPROVED: [], PENDING: [], REJECTED: [], STALE: [] };
@@ -28,7 +35,7 @@ for (const entry of cases) byStatus[entry.status].push(entry);
 const covered = new Set(cases.map((entry) => entry.expected_identifier));
 const uncovered = declaredIdentifiers().filter((identifier) => !covered.has(identifier));
 
-if (asJson) {
+if (values.json) {
   console.log(JSON.stringify({
     total: cases.length,
     approved: byStatus.APPROVED.length,
@@ -47,24 +54,31 @@ if (asJson) {
     })),
   }, null, 2));
 } else {
-  const stale = byStatus.STALE.length > 0 ? `, veraltet ${byStatus.STALE.length}` : '';
-  console.log(`Regressionsfälle: ${cases.length} (freigegeben ${byStatus.APPROVED.length}, offen ${byStatus.PENDING.length}, abgelehnt ${byStatus.REJECTED.length}${stale})\n`);
+  const stale = byStatus.STALE.length > 0 ? t('status.staleSuffix', { count: byStatus.STALE.length }) : '';
+  console.log(`${t('status.summary', {
+    total: cases.length,
+    approved: byStatus.APPROVED.length,
+    pending: byStatus.PENDING.length,
+    rejected: byStatus.REJECTED.length,
+    stale,
+  })}\n`);
+
+  const marks = { APPROVED: t('status.markApproved'), PENDING: t('status.markPending'), REJECTED: t('status.markRejected'), STALE: t('status.markStale') };
   for (const entry of cases) {
-    const mark = { APPROVED: '[ok]  ', PENDING: '[offen]', REJECTED: '[abgelehnt]', STALE: '[veraltet]' }[entry.status];
     const provenance = entry.origin.kind === 'ADVISORY' ? entry.origin.advisory_id : entry.origin.kind;
     const reviewer = entry.review.reviewed_by ? ` - ${entry.review.reviewed_by}, ${entry.review.reviewed_at}` : '';
-    console.log(`${mark} ${entry.slug}`);
+    console.log(`${marks[entry.status]} ${entry.slug}`);
     console.log(`        ${entry.expected_identifier} | ${provenance} | ${entry.origin.causal_fidelity}${reviewer}`);
   }
-  if (uncovered.length > 0) console.log(`\nOhne Fixture-Paar: ${uncovered.join(', ')}`);
+  if (uncovered.length > 0) console.log(`\n${t('status.uncovered', { identifiers: uncovered.join(', ') })}`);
 }
 
 if (byStatus.STALE.length > 0) {
-  console.error(`\n${byStatus.STALE.length} Freigabe(n) veraltet: Das Beispielpaar wurde nach der Freigabe geändert. Erneut prüfen und mit "npm run fixtures:review" freigeben.`);
+  console.error(`\n${t('status.staleWarning', { count: byStatus.STALE.length })}`);
 }
 
 const unapproved = byStatus.PENDING.length + byStatus.STALE.length;
-if (requireApproved && unapproved > 0) {
-  console.error(`\n${unapproved} Fixture-Paar(e) ohne gültige menschliche Freigabe. Ein Review ist Voraussetzung für die Nutzung in CI-Gates oder Regelerzeugung.`);
+if (values['require-approved'] && unapproved > 0) {
+  console.error(`\n${t('status.gateFailed', { count: unapproved })}`);
   process.exitCode = 1;
 }

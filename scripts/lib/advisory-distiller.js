@@ -145,7 +145,7 @@ namespace Typo3SecuritySuite\\Tests\\Fixtures\\Learned;
  * This is a generic one-liner derived from the advisory's vulnerability class,
  * not from its documented root cause, and no rule has been shown to detect it.
  * It is therefore not evidence of anything. To turn it into a regression case,
- * follow docs/CONTINUOUS_LEARNING.md: write a realistic vulnerable example and
+ * follow docs/en/CONTINUOUS_LEARNING.md: write a realistic vulnerable example and
  * an equivalent secure counterpart under tests/fixtures/regression/<slug>/ with
  * a reviewed case.json. This file is test input and must never run in production.
  */

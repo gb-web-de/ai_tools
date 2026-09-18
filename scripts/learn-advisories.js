@@ -6,20 +6,22 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 import { distillAdvisory, parseRss, persistLearning } from "./lib/advisory-distiller.js";
 import { resolveKnowledgeDir } from "./lib/knowledge-paths.js";
+import { resolveLanguage, translator } from "./lib/i18n.js";
 
 function parseArguments(argv) {
-  const options = { input: "https://news.typo3.com/security/rss-security", limit: 10, dryRun: false, knowledgeDir: undefined };
+  const options = { input: "https://news.typo3.com/security/rss-security", limit: 10, dryRun: false, knowledgeDir: undefined, lang: undefined };
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
     if (argument === "--input") options.input = argv[++index];
     else if (argument === "--limit") options.limit = Number.parseInt(argv[++index], 10);
     else if (argument === "--knowledge-dir") options.knowledgeDir = argv[++index];
+    else if (argument === "--lang") options.lang = argv[++index];
     else if (argument === "--dry-run") options.dryRun = true;
     else if (argument === "--help") options.help = true;
-    else throw new Error(`Unbekannte Option: ${argument}`);
+    else throw new Error(translator(resolveLanguage(options.lang))("learn.unknownOption", { option: argument }));
   }
   if (!Number.isInteger(options.limit) || options.limit < 1 || options.limit > 100) {
-    throw new Error("--limit muss eine ganze Zahl zwischen 1 und 100 sein.");
+    throw new Error(translator(resolveLanguage(options.lang))("learn.limitRange"));
   }
   return options;
 }
@@ -37,7 +39,7 @@ async function readInput(input) {
 async function main() {
   const options = parseArguments(process.argv.slice(2));
   if (options.help) {
-    console.log("Usage: npm run learn:advisories -- [--input <rss|json>] [--limit <1-100>] [--knowledge-dir <path>] [--dry-run]");
+    console.log(translator(resolveLanguage(options.lang))("learn.usage"));
     return;
   }
 
@@ -60,6 +62,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(`Advisory-Lernen fehlgeschlagen: ${error.message}`);
+  console.error(translator(resolveLanguage()).call(null, "learn.failed", { message: error.message }));
   process.exitCode = 1;
 });

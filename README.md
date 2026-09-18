@@ -8,7 +8,7 @@
 Eine universelle, produktionsreife Entwicklungs- und Sicherheits-Suite für **TYPO3 (v12 / v13 / v14)**.
 Sie verbindet **alle modernen KI-Systeme** (Cursor, Claude Code/Desktop, Windsurf, GitHub Copilot, Antigravity) über ein zentrales Regelwerk mit einem **Model Context Protocol (MCP) Server**, tiefgehenden **PHPStan AST-Sicherheitsregeln**, einem **Fluid XSS Auto-Fixer** und einer **selbstlernenden Wissensbasis**.
 
-📖 **Ausführliche Dokumentation:** [docs/SELF_LEARNING_ARCHITECTURE.md](docs/SELF_LEARNING_ARCHITECTURE.md) (Architektur, Continuous Learning, Bedrohungsmodell & Roadmap).
+📖 **Ausführliche Dokumentation:** [docs/](docs/README.md) – zweisprachig (DE/EN): [Architektur & Roadmap](docs/de/SELF_LEARNING_ARCHITECTURE.md) · [Betrieb & Grenzen](docs/de/CONTINUOUS_LEARNING.md) · [English](docs/en/SELF_LEARNING_ARCHITECTURE.md).
 
 ---
 
@@ -37,7 +37,8 @@ ai_tools/
 ├── ai-rules/                     # 🌟 Single Source of Truth für alle KI-Regeln
 ├── .typo3-knowledge/             # 🧠 Persistenter Wissensspeicher (Advisories, gelernte Patterns)
 ├── docs/                         # 📖 Master-Dokumentationen
-│   └── SELF_LEARNING_ARCHITECTURE.md
+│   ├── de/          # Deutsche Dokumentation
+│   └── en/          # English documentation
 ├── scripts/
 │   ├── sync-ai-configs.js        # Kompiliert ai-rules/ in alle KI-Zielformate
 │   └── setup-project.js          # Exportiert Regeln & MCP in externe TYPO3-Instanzen
@@ -118,13 +119,15 @@ npm run knowledge:import -- --in ../typo3-knowledge-share/bundles --dry-run
 
 Alle Learning-CLIs und der MCP-Server lösen den Speicherort gleich auf: `--knowledge-dir`, dann `TYPO3_KNOWLEDGE_PATH`, dann `.typo3-knowledge/`.
 
+Die Konsolenausgabe ist zweisprachig: `--lang en|de`, sonst `TYPO3_AI_LANG`, sonst die System-Locale (`LANG`), sonst Englisch.
+
 Der Advisory-Distiller klassifiziert nur bekannte Schwachstellenklassen. Unbekannte Kategorien bleiben als `UNCLASSIFIED` im Wissensspeicher und müssen vor einer Regelerzeugung menschlich geprüft werden. Automatisch erzeugte Entwürfe landen ungetrackt unter `var/advisory-drafts/` – sie sind klassifizierte Vorschläge, kein Sicherheitsnachweis.
 
 Belastbar wird ein Fall erst als Fixture-Paar unter `tests/fixtures/regression/<slug>/`: ein realistisches verwundbares Beispiel und ein fachlich gleichwertiges sicheres Gegenbeispiel, geprüft gegen den stabilen Error-Identifier der zuständigen PHPStan-Regel. Das verwundbare Beispiel muss erkannt werden, das sichere muss befundfrei bleiben. Herkunft und Review-Status sind Pflichtfelder und werden schema-validiert.
 
 Der Austausch zwischen Projekten läuft über ein privates Git-Repository mit einer Bundle-Datei je Projekt. Der Export prüft vorher auf vertrauliche Daten; der Import meldet Konflikte, ohne lokalen Bestand zu überschreiben, und erzeugt bei Wiederholung keine Duplikate. Wichtig: **Vertrauen wandert nicht mit** – ein importierter Fix steht lokal auf `PENDING` und aktiviert keine Rector-Regel, bis ihn jemand vor Ort freigibt.
 
-Meilenstein 3 bringt außerdem einen GitHub-PR-Bot mit Patch-Artefakten und Inline-Vorschlägen. Die unterstützten Muster, Review-Voraussetzungen und Einrichtung der Workflows stehen in [docs/CONTINUOUS_LEARNING.md](docs/CONTINUOUS_LEARNING.md).
+Meilenstein 3 bringt außerdem einen GitHub-PR-Bot mit Patch-Artefakten und Inline-Vorschlägen. Die unterstützten Muster, Review-Voraussetzungen und Einrichtung der Workflows stehen in [docs/de/CONTINUOUS_LEARNING.md](docs/de/CONTINUOUS_LEARNING.md) ([English](docs/en/CONTINUOUS_LEARNING.md)).
 
 ---
 

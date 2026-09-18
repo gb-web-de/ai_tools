@@ -29,4 +29,4 @@ Füge folgendes in deine `claude_desktop_config.json` ein:
 
 Die Wissenssuche liefert begriffsbasierte DE/EN-Treffer, Scores und verwandte Einträge. `limit` ist optional (1–50, Standard 10). Neue Entwickler-Fixes bleiben ohne explizites Review `PENDING`. Der Speicherpfad kann mit `TYPO3_KNOWLEDGE_PATH` gesetzt werden.
 
-Details zur Regelerzeugung und zum PR-Bot: [Continuous Learning](../docs/CONTINUOUS_LEARNING.md).
+Details zur Regelerzeugung und zum PR-Bot: [Continuous Learning](../docs/en/CONTINUOUS_LEARNING.md) ([Deutsch](../docs/de/CONTINUOUS_LEARNING.md)).

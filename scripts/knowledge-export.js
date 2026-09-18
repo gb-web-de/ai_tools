@@ -3,6 +3,7 @@ import process from 'node:process';
 import { parseArgs } from 'node:util';
 import { exportKnowledge, writeBundle } from './lib/knowledge-exchange.js';
 import { resolveKnowledgeDir } from './lib/knowledge-paths.js';
+import { resolveLanguage, translator } from './lib/i18n.js';
 
 /**
  * Writes a shareable bundle from the local knowledge store.
@@ -20,8 +21,10 @@ try {
     'include-pending': { type: 'boolean' },
     'allow-sensitive': { type: 'boolean' },
     'dry-run': { type: 'boolean' },
+    lang: { type: 'string' },
   } });
 
+  const t = translator(resolveLanguage(values.lang));
   const directory = resolveKnowledgeDir(values['knowledge-dir']);
   const { bundle, summary } = exportKnowledge(directory, {
     includePending: values['include-pending'],
@@ -29,7 +32,7 @@ try {
     label: values.label || undefined,
   });
 
-  if (!values['dry-run'] && !values.out) throw new Error('--out <datei> ist erforderlich (oder --dry-run für eine Vorschau).');
+  if (!values['dry-run'] && !values.out) throw new Error(t('export.outRequired'));
   const file = values['dry-run'] ? null : writeBundle(values.out, bundle);
 
   console.log(JSON.stringify({
@@ -42,7 +45,7 @@ try {
   }, null, 2));
 
   if (summary.sensitive.length > 0) {
-    console.error(`\nWarnung: ${summary.sensitive.length} Eintrag/Einträge wurden trotz möglicher vertraulicher Daten exportiert (--allow-sensitive).`);
+    console.error(`\n${t('export.sensitiveWarning', { count: summary.sensitive.length })}`);
   }
 } catch (error) {
   console.error(error.message);

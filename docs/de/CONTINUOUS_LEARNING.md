@@ -1,6 +1,24 @@
+> **Sprache:** Deutsch · [English](../en/CONTINUOUS_LEARNING.md)
+
 # Continuous Learning: Betrieb und Grenzen
 
 Meilenstein 3 verbindet lokale Wissenssuche, reviewbasierte Rector-Kandidaten und GitHub-Review-Vorschläge. Meilenstein 4 ergänzt geprüfte Regressionsfixtures mit stabilen Error-Identifiern. Meilenstein 5 ergänzt den kontrollierten Austausch des Wissensbestands zwischen Projekten. Benötigt werden Node.js 20+ und PHP; die Regressionstests verwenden die im Composer-Lockfile festgelegte Security-Suite. Der aktuelle Lockfile wird in CI mit PHP 8.5 geprüft.
+
+## Sprache der Konsolenausgabe
+
+Jede nutzerorientierte CLI bestimmt ihre Ausgabesprache in dieser Reihenfolge:
+
+1. `--lang en|de` – explizit, für einen einzelnen Aufruf
+2. `TYPO3_AI_LANG` – projektweit, z. B. in CI oder `.envrc`
+3. `LC_ALL` / `LC_MESSAGES` / `LANG` – die POSIX-Konvention, damit ein deutscher Arbeitsplatz ohne Konfiguration Deutsch bekommt
+4. `en` – in CI steht `LANG` meist auf `C`; so bleiben Build-Logs und Issue-Reports für alle lesbar
+
+```bash
+npm run fixtures:status -- --lang de
+export TYPO3_AI_LANG=de
+```
+
+Eine nicht unterstützte Locale wird ignoriert statt abgelehnt: Ein Werkzeug soll nicht scheitern, weil eine Maschine auf eine Sprache eingestellt ist, für die es keine Übersetzung gibt. Maschinenlesbare Ausgaben (JSON) werden nie übersetzt – Feldnamen und Statuswerte wie `PENDING` oder `CONFLICT` sind Schnittstelle, kein Fließtext.
 
 ## Lokaler Wissensgraph
 
@@ -110,7 +128,7 @@ Der Pfad ist Teil des Testaufbaus, nicht Kosmetik: Mehrere Regeln werten den Dat
 * `expected_identifier` muss in `rules/SecurityRuleIdentifier.php` definiert sein. Ein Test gegen einen Identifier, den keine Regel ausgeben kann, ist damit ausgeschlossen.
 * `origin.kind=ADVISORY` verlangt `advisory_id` und einen https-Link; `origin.kind=RULE_CONTRACT` verlangt eine benannte `reference`.
 * `origin.causal_fidelity` trennt `DOCUMENTED_ROOT_CAUSE` (Beispiel bildet die im Advisory beschriebene Ursache ab, belegt durch `origin.documented_cause`) von `VULNERABILITY_CLASS` (Beispiel bildet die Schwachstellenklasse ab). Die stärkere Behauptung ohne Belegtext lässt der Test nicht zu.
-* `review.status=APPROVED` verlangt `reviewed_by` und `reviewed_at`.
+* `review.status=APPROVED` verlangt `reviewed_by`, `reviewed_at` und einen `content_digest`.
 
 Der Test prüft je Paar drei Aussagen: Das verwundbare Beispiel wird mit dem erwarteten Identifier erkannt und löst keine fremde Sicherheitsregel aus; das sichere Gegenbeispiel bleibt ohne Sicherheitsbefund; beide bleiben frei von allgemeinen Analysefehlern. Zusätzlich muss jeder deklarierte Identifier ein Paar besitzen, und keine PHP-Datei unter dem Fixture-Baum darf außerhalb eines Falls mit `case.json` liegen.
 

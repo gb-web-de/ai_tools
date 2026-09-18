@@ -4,6 +4,7 @@ import path from 'node:path';
 import process from 'node:process';
 import { parseArgs } from 'node:util';
 import { contentDigest, loadCases } from './lib/regression-fixtures.js';
+import { resolveLanguage, translator } from './lib/i18n.js';
 
 /**
  * Records a human review decision for a regression fixture pair.
@@ -12,39 +13,34 @@ import { contentDigest, loadCases } from './lib/regression-fixtures.js';
  * is that someone read the two examples; a bulk flag would turn it into a
  * formality and the review status would stop meaning anything.
  *
+ * Output language follows --lang, then TYPO3_AI_LANG, then the system locale.
+ *
  * Usage:
  *   npm run fixtures:review -- --show <slug>
  *   npm run fixtures:review -- --slug <slug> --by "Name"
- *   npm run fixtures:review -- --slug <slug> --reject --by "Name" --note "Grund"
+ *   npm run fixtures:review -- --slug <slug> --reject --by "Name" --note "reason"
  */
-const CHECKLIST = [
-  'Bildet das verwundbare Beispiel eine Schwachstelle ab, die in echtem TYPO3-Code so vorkommt?',
-  'Trifft die in case.json beschriebene Ursache (root_cause) auf genau diesen Code zu?',
-  'Ist das sichere Gegenbeispiel fachlich gleichwertig - loest es dieselbe Aufgabe, nur sicher?',
-  'Stimmt die Herkunft: behauptet origin nicht mehr, als die Quelle hergibt?',
-  'Ist der erwartete Identifier die Regel, die fuer diese Schwachstellenklasse zustaendig ist?',
-];
-
-function show(entry) {
+function show(entry, t) {
   console.log(`${entry.slug}\n${'='.repeat(entry.slug.length)}\n`);
-  console.log(`Titel:      ${entry.title}`);
-  console.log(`Regel:      ${entry.rule}`);
-  console.log(`Identifier: ${entry.expected_identifier}`);
-  console.log(`Herkunft:   ${entry.origin.kind}${entry.origin.advisory_id ? ` ${entry.origin.advisory_id}` : ''}${entry.origin.link ? ` (${entry.origin.link})` : ''}`);
-  console.log(`Aussage:    ${entry.origin.causal_fidelity}`);
-  console.log(`Hinweis:    ${entry.origin.note}`);
-  console.log(`\nUrsache:\n  ${entry.root_cause}\n`);
+  console.log(`${t('review.fieldTitle')}${entry.title}`);
+  console.log(`${t('review.fieldRule')}${entry.rule}`);
+  console.log(`${t('review.fieldIdentifier')}${entry.expected_identifier}`);
+  console.log(`${t('review.fieldOrigin')}${entry.origin.kind}${entry.origin.advisory_id ? ` ${entry.origin.advisory_id}` : ''}${entry.origin.link ? ` (${entry.origin.link})` : ''}`);
+  console.log(`${t('review.fieldClaim')}${entry.origin.causal_fidelity}`);
+  console.log(`${t('review.fieldNote')}${entry.origin.note}`);
+  console.log(`\n${t('review.fieldCause')}\n  ${entry.root_cause}\n`);
 
-  for (const [label, key] of [['VERWUNDBAR', 'vulnerable_path'], ['SICHER', 'secure_path']]) {
+  for (const [label, key] of [[t('review.labelVulnerable'), 'vulnerable_path'], [t('review.labelSecure'), 'secure_path']]) {
     console.log(`--- ${label}: ${entry[key]} ${'-'.repeat(Math.max(0, 56 - entry[key].length))}`);
     console.log(fs.readFileSync(path.join(entry.directory, entry[key]), 'utf8').trimEnd());
     console.log();
   }
 
-  console.log('Pruefpunkte:');
-  for (const item of CHECKLIST) console.log(`  - ${item}`);
-  console.log(`\nFreigeben:  npm run fixtures:review -- --slug ${entry.slug} --by "Dein Name"`);
-  console.log(`Ablehnen:   npm run fixtures:review -- --slug ${entry.slug} --reject --by "Dein Name" --note "Grund"`);
+  console.log(t('review.checklistHeading'));
+  for (const key of ['review.check1', 'review.check2', 'review.check3', 'review.check4', 'review.check5']) console.log(`  - ${t(key)}`);
+  console.log(`\n${t('review.checkNotYours')}`);
+  console.log(`\n${t('review.hintApprove')}  npm run fixtures:review -- --slug ${entry.slug} --by "<name>"`);
+  console.log(`${t('review.hintReject')}  npm run fixtures:review -- --slug ${entry.slug} --reject --by "<name>" --note "<reason>"`);
 }
 
 try {
@@ -54,24 +50,26 @@ try {
     by: { type: 'string' },
     note: { type: 'string' },
     reject: { type: 'boolean' },
+    lang: { type: 'string' },
   } });
 
+  const t = translator(resolveLanguage(values.lang));
   const cases = loadCases();
   const find = (slug) => {
     const entry = cases.find((item) => item.slug === slug);
-    if (!entry) throw new Error(`Unbekannter Fall: ${slug}\nVerfügbar: ${cases.map((item) => item.slug).join(', ')}`);
+    if (!entry) throw new Error(t('review.unknownCase', { slug, available: cases.map((item) => item.slug).join(', ') }));
     return entry;
   };
 
   if (values.show) {
-    show(find(values.show));
+    show(find(values.show), t);
     process.exit(0);
   }
 
-  if (!values.slug) throw new Error('--slug <slug> oder --show <slug> ist erforderlich. Übersicht: npm run fixtures:status');
-  if (!values.by?.trim()) throw new Error('--by "<Name>" ist erforderlich: eine Freigabe braucht einen benennbaren Reviewer.');
-  if (values.note !== undefined && (typeof values.note !== 'string' || values.note.length > 2000)) throw new Error('--note ist zu lang (max. 2000 Zeichen).');
-  if (values.reject && !values.note?.trim()) throw new Error('--reject benötigt --note "<Grund>", damit die Ablehnung nachvollziehbar bleibt.');
+  if (!values.slug) throw new Error(t('review.slugRequired'));
+  if (!values.by?.trim()) throw new Error(t('review.byRequired'));
+  if (values.note !== undefined && (typeof values.note !== 'string' || values.note.length > 2000)) throw new Error(t('review.noteTooLong'));
+  if (values.reject && !values.note?.trim()) throw new Error(t('review.rejectNeedsNote'));
 
   const entry = find(values.slug);
   const status = values.reject ? 'REJECTED' : 'APPROVED';
@@ -90,7 +88,7 @@ try {
 
   fs.writeFileSync(manifest, `${JSON.stringify(stored, null, 2)}\n`, 'utf8');
   console.log(JSON.stringify({ slug: entry.slug, ...stored.review }, null, 2));
-  if (status === 'APPROVED') console.log('\nHinweis: Wird eines der beiden Beispiele danach geändert, verfällt die Freigabe (Status STALE).');
+  if (status === 'APPROVED') console.log(`\n${t('review.staleHint')}`);
 } catch (error) {
   console.error(error.message);
   process.exitCode = 1;

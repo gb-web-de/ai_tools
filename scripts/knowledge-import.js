@@ -6,6 +6,7 @@ import { parseArgs } from 'node:util';
 import { importKnowledge, readBundle } from './lib/knowledge-exchange.js';
 import { indexKnowledge } from './lib/knowledge-store.js';
 import { resolveKnowledgeDir } from './lib/knowledge-paths.js';
+import { resolveLanguage, translator } from './lib/i18n.js';
 
 /**
  * Merges a shared bundle into the local knowledge store.
@@ -28,9 +29,11 @@ try {
     'knowledge-dir': { type: 'string' },
     'dry-run': { type: 'boolean' },
     'no-index': { type: 'boolean' },
+    lang: { type: 'string' },
   } });
 
-  if (!values.in) throw new Error('--in <datei|verzeichnis> ist erforderlich.');
+  const t = translator(resolveLanguage(values.lang));
+  if (!values.in) throw new Error(t('import.inRequired'));
   const directory = resolveKnowledgeDir(values['knowledge-dir']);
 
   const target = path.resolve(values.in);
@@ -39,28 +42,28 @@ try {
     // command creates on the fly: where team knowledge lives is the team's
     // decision, and silently creating a local directory would look like a
     // working sync while nothing is actually shared.
+    const repository = target.replace(/\/bundles$/u, '');
     throw new Error([
-      `Austauschquelle nicht gefunden: ${target}`,
+      t('import.sourceNotFound', { target }),
       '',
-      'Der gemeinsame Wissensbestand liegt in einem eigenen (privaten) Git-Repository,',
-      'das zuerst eingerichtet werden muss. Einmalig pro Arbeitsplatz:',
+      t('import.setupIntro'),
       '',
-      `  git clone <url-des-share-repos> ${target.replace(/\/bundles$/u, '')}`,
+      `  git clone <url> ${repository}`,
       '',
-      'Noch kein Share-Repository vorhanden? Dann lokal anlegen und später verteilen:',
+      t('import.setupNoRepo'),
       '',
       `  mkdir -p ${target}`,
-      `  git -C ${target.replace(/\/bundles$/u, '')} init`,
-      '  npm run knowledge:export -- --out ' + path.join(target, '<projektname>.json') + ' --label <projektname>',
+      `  git -C ${repository} init`,
+      `  npm run knowledge:export -- --out ${path.join(target, '<project>.json')} --label <project>`,
       '',
-      'Details: docs/CONTINUOUS_LEARNING.md, Abschnitt "Git-basierter Team-Workflow".',
+      t('import.setupDetails'),
     ].join('\n'));
   }
   const files = fs.statSync(target).isDirectory()
     ? fs.readdirSync(target).filter((name) => name.endsWith('.json')).sort().map((name) => path.join(target, name))
     : [target];
   if (files.length === 0) {
-    throw new Error(`Keine .json-Austauschdateien in ${target}. Exportiert ein Projekt bereits dorthin? Siehe "npm run knowledge:export -- --help" bzw. docs/CONTINUOUS_LEARNING.md.`);
+    throw new Error(t('import.noBundles', { target }));
   }
 
   const runs = [];
@@ -99,11 +102,11 @@ try {
     totals,
     runs,
     index,
-    note: 'Importierte Entwickler-Fixes stehen lokal auf PENDING. Ein Import erteilt keine Freigabe und aktiviert keine Rector-Regel.',
+    note: t('import.note'),
   }, null, 2));
 
   if (totals.conflict > 0 || totals.invalid > 0) {
-    console.error(`\n${totals.conflict} Konflikt(e) und ${totals.invalid} ungültige(r) Eintrag/Einträge. Bestehendes Wissen wurde nicht verändert.`);
+    console.error(`\n${t('import.problems', { conflict: totals.conflict, invalid: totals.invalid })}`);
     process.exitCode = 1;
   }
 } catch (error) {

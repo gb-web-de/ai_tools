@@ -1,3 +1,5 @@
+> **Sprache:** Deutsch · [English](../en/SELF_LEARNING_ARCHITECTURE.md)
+
 # Autonome & Selbstlernende TYPO3 AI-Sicherheitsarchitektur
 ## Master-Dokumentation: Continuous Learning, Vulnerability Intelligence & Self-Healing
 
