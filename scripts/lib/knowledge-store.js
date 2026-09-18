@@ -13,6 +13,18 @@ const CONCEPTS = {
 };
 
 export const digest = (text) => createHash('sha256').update(text).digest('hex');
+
+/**
+ * Repair shapes a generator knows how to turn into a rule.
+ *
+ * A remediation label is a promise that some generator can verify the repair
+ * end to end, so an unknown label is rejected rather than stored as a hint
+ * nothing will ever act on.
+ */
+export const SUPPORTED_REMEDIATIONS = [
+  'unserialize_disallow_classes', // PHP, via Rector
+  'typoscript_htmlspecialchars', // TypoScript, via Fractor
+];
 const normalized = (value) => String(value).normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 const tokens = (value) => [...new Set(normalized(value).split(' ').filter((token) => token.length > 2))];
 const concepts = (text) => Object.entries(CONCEPTS)
@@ -155,11 +167,15 @@ export function validateFix(input) {
   }
   if (input.review_status !== undefined && !['PENDING', 'APPROVED', 'REJECTED'].includes(input.review_status)) throw new Error('Ungültiger Review-Status.');
   if (input.review_status === 'APPROVED' && !input.reviewed_by?.trim()) throw new Error('Freigegebene Fixes benötigen reviewed_by.');
-  if (input.remediation && input.remediation !== 'unserialize_disallow_classes') throw new Error('Nicht unterstützte Remediation.');
+  if (input.remediation && !SUPPORTED_REMEDIATIONS.includes(input.remediation)) throw new Error(`Nicht unterstützte Remediation. Bekannt: ${SUPPORTED_REMEDIATIONS.join(', ')}.`);
   const diff = input.diff.replaceAll('\r\n', '\n').trim();
   const files = [...diff.matchAll(/^\+\+\+ b\/(.+)$/gm)].map((match) => match[1]);
+  // At least one changed line, added or removed - not both. Requiring a removal
+  // would reject the most common security repair there is: adding a check or an
+  // escaping property that was missing.
+  const hasChangedLine = /^-(?!--)/m.test(diff) || /^\+(?!\+\+)/m.test(diff);
   if (!/^--- a\/.+$/m.test(diff) || !/^@@ -\d+(?:,\d+)? \+\d+(?:,\d+)? @@/m.test(diff)
-      || !/^-(?!--)/m.test(diff) || !/^\+(?!\+\+)/m.test(diff) || files.length === 0) throw new Error('Unified Diff mit Dateiköpfen, Hunk und geänderten Zeilen erwartet.');
+      || !hasChangedLine || files.length === 0) throw new Error('Unified Diff mit Dateiköpfen, Hunk und geänderten Zeilen erwartet.');
   if (files.some((file) => file.split('/').some((part) => part === '..' || part === '' || part === '.git') || /[\x00-\x1f\\]/u.test(file))) throw new Error('Unsicherer Pfad im Diff.');
   const lines = diff.split('\n');
   for (let index = 0; index < lines.length; index++) {

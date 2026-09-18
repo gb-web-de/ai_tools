@@ -105,8 +105,9 @@ npm run learn:advisories -- --input ./advisories.json --dry-run
 npm run knowledge:index
 npm run knowledge:query -- --query "Mandantentrennung"
 
-# Aus wiederholt freigegebenen Fixes getestete Rector-Kandidaten erzeugen
-npm run learn:rector
+# Aus wiederholt freigegebenen Fixes getestete Regel-Kandidaten erzeugen
+npm run learn:rector      # PHP, via Rector
+npm run learn:fractor     # TypoScript, via Fractor
 
 # Regressionsfixtures der Sicherheitsregeln prüfen und Review-Stand ansehen
 npm run test:regression
@@ -132,6 +133,8 @@ Die Konsolenausgabe ist zweisprachig: `--lang en|de`, sonst `TYPO3_AI_LANG`, son
 | Fluid (`.html`) | `scan_fluid_xss.py` | Muster |
 | JavaScript | `npm run scan:js` | AST (acorn) |
 | TypoScript / TSconfig | `npm run scan:typoscript` | Pfad-Parser |
+
+Automatische Reparatur: Rector für PHP, **Fractor** für TypoScript und Fluid. Damit endet die Selbstheilung nicht mehr an der PHP-Grenze.
 
 Alle Werkzeuge geben stabile Identifier aus (`typo3Security.*`), auf die Tests und der SARIF-Export abbilden. Jede Regel besitzt ein Fixture-Paar aus verwundbarem und sicherem Beispiel.
 

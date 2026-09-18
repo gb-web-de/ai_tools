@@ -33,6 +33,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Von Composer veröffentlichte TYPO3-Assets (reproduzierbar aus composer install)
+typo3-security-suite/public/
+
 # Ungeprüfte Advisory-Entwürfe und isolierter PHPStan-Fixture-Cache
 var/
 typo3-security-suite/var/

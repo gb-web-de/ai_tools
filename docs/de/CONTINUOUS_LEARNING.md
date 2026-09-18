@@ -80,6 +80,32 @@ php typo3-security-suite/vendor/bin/rector process /pfad/zur/extension \
   --config typo3-security-suite/generated/rector/<content-hash>/rector.php --dry-run
 ```
 
+### Fractor: Reparatur jenseits von PHP
+
+Rector bearbeitet ausschließlich PHP. Die HEAL-Stufe des Lernkreislaufs endete damit an der Sprachgrenze: Ein TypoScript-Befund liess sich erfassen und durchsuchen, aber nie automatisch reparieren. [Fractor](https://github.com/andreaswolf/fractor-fractor) schliesst diese Lücke – es arbeitet nach demselben Prinzip wie Rector, aber auf Nicht-PHP-Dateien, und nutzt für TypoScript einen echten AST (`helmich/typo3-typoscript-parser`).
+
+```bash
+npm run learn:fractor -- --dry-run
+npm run learn:fractor
+```
+
+Das erste unterstützte Muster heisst `typoscript_htmlspecialchars` und entspricht dem häufigsten Befund des TypoScript-Scanners: Request-Daten werden ohne Escaping gerendert. Die Voraussetzungen sind dieselben wie bei Rector – mindestens zwei unterschiedliche, explizit freigegebene Fixes mit verschiedenen `source`-Referenzen, `finding_type: XSS` und `remediation: typoscript_htmlspecialchars`:
+
+```diff
+--- a/Configuration/TypoScript/setup.typoscript
++++ b/Configuration/TypoScript/setup.typoscript
+@@ -3,0 +4 @@
++    htmlSpecialChars = 1
+```
+
+Die erzeugte Regel stammt aus einer festen lokalen Vorlage; Patch-Text wird nie als PHP eingebettet. Sie ergänzt `htmlSpecialChars = 1` ausschliesslich dort, wo ein Block Request-Daten liest und **weder** `htmlSpecialChars` **noch** `intval` gesetzt ist. Ein vorhandener Wert wird nie überschrieben – ein bewusstes `htmlSpecialChars = 0` bleibt für eine menschliche Entscheidung stehen.
+
+Vor der Ausgabe läuft das echte installierte Fractor gegen isolierte Fixtures und prüft vier Aussagen: Das verwundbare Beispiel wird repariert, das sichere bleibt unverändert, ein zweiter Lauf ändert nichts mehr (Idempotenz – sonst würde wiederholtes Anwenden die Datei zerstören), und die Regel ist syntaktisch gültiges PHP. Schlägt eine Prüfung fehl, entsteht kein Bundle.
+
+Bundles liegen unter `typo3-security-suite/generated/fractor/<content-hash>/` mit Regel, Config, Fixtures und Manifest. Sie sind `EXPERIMENTAL`. Im MCP-Server wendet `apply_fractor_fixes` ein Bundle an; ein `configPath` ist Pflicht und wird nie automatisch gewählt, denn die einzigen mitgelieferten Regeln sind ungeprüfte Kandidaten.
+
+Zwei Dinge, die beim Einbau auffielen und Korrekturen am Bestand erforderten: Die Liste unterstützter Remediations war auf das eine Rector-Muster festgelegt, und die Diff-Validierung verlangte mindestens eine **entfernte** Zeile. Damit war eine reine Hinzufügung nicht darstellbar – obwohl das bei Sicherheitsfixes das häufigste Muster ist, nämlich eine fehlende Absicherung zu ergänzen. Beides ist behoben; der Rector-Katalog bleibt unverändert streng und lernt weiterhin nur Eins-zu-eins-Ersetzungen.
+
 ## PR-Audit und GitHub-Vorschläge
 
 Die Workflows müssen zusammen mit ihren Skripten zunächst auf dem Default-Branch verfügbar sein. `security-audit.yml` läuft bei PR-Änderungen mit Leserechten. Es verwendet die Werkzeuge des Base-Commits und liest den PR-Inhalt aus Git-Objekten. PHP wird nur tokenisiert, niemals eingebunden oder ausgeführt. Ein Report und eine `security-fixes.patch` werden als Artefakt gespeichert. Befunde oder unvollständige Analysen lassen den Audit-Schritt fehlschlagen.

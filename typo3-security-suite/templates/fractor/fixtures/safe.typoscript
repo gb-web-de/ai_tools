@@ -1,0 +1,14 @@
+lib.pageId = TEXT
+lib.pageId {
+    data = GP:id
+    intval = 1
+}
+lib.alreadySafe = TEXT
+lib.alreadySafe {
+    data = GP:q
+    htmlSpecialChars = 1
+}
+lib.static = TEXT
+lib.static {
+    value = nothing dynamic here
+}

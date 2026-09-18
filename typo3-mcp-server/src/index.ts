@@ -191,6 +191,19 @@ class Typo3SecurityMcpServer {
           }
         },
         {
+          name: "apply_fractor_fixes",
+          description: "Führt Fractor für TypoScript- und Fluid-Dateien aus - das Gegenstück zu Rector, das nur PHP bearbeitet. Ohne --config wird ein generiertes, verifiziertes Bundle aus generated/fractor/ benötigt.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              targetPath: { type: "string", description: "Pfad zum Quellcode." },
+              configPath: { type: "string", description: "Pfad zu einer fractor.php, z. B. aus einem generierten Bundle." },
+              dryRun: { type: "boolean", description: "Wenn true, werden nur Änderungen angezeigt (Standard: true)." }
+            },
+            required: ["targetPath", "configPath"]
+          }
+        },
+        {
           name: "scan_frontend_assets",
           description: "Prüft JavaScript und TypoScript einer Extension auf Sicherheitsprobleme, die die PHP- und Fluid-Werkzeuge nicht sehen: DOM-XSS, eval, Open Redirect, ungeprüfte postMessage-Handler, hartkodierte Zugangsdaten, sowie in TypoScript ungeschützte Request-Daten, offene typolink-Ziele, freizügiges parseFunc, deaktivierten Cache und Debug-Ausgaben. Die JavaScript-Analyse arbeitet auf dem AST, nicht auf Regex.",
           inputSchema: {
@@ -296,6 +309,8 @@ class Typo3SecurityMcpServer {
             return await this.handleSyncAdvisories((args?.limit as number) || 10);
           case "check_fluid_templates":
             return await this.handleCheckFluidTemplates(args?.templatesPath as string);
+          case "apply_fractor_fixes":
+            return this.handleApplyFractorFixes(args?.targetPath as string, args?.configPath as string, args?.dryRun !== false);
           case "scan_frontend_assets":
             return this.handleScanFrontendAssets(args?.targetPath as string, args?.only as string | undefined);
           case "query_security_knowledge":
@@ -823,6 +838,51 @@ class Typo3SecurityMcpServer {
           )
         }
       ]
+    };
+  }
+
+  /**
+   * Runs Fractor over TypoScript and Fluid.
+   *
+   * A config is mandatory and never defaulted: Fractor rules rewrite files, and
+   * the only rules this suite ships are generated candidates that carry an
+   * EXPERIMENTAL status. Picking one implicitly would apply an unreviewed
+   * transformation to someone's project.
+   */
+  private handleApplyFractorFixes(targetPath: string, configPath: string, dryRun: boolean) {
+    if (!targetPath || !configPath) {
+      throw new McpError(ErrorCode.InvalidParams, "targetPath und configPath sind erforderlich.");
+    }
+    const resolvedTarget = path.resolve(targetPath);
+    const resolvedConfig = path.resolve(configPath);
+    for (const [label, candidate] of [["targetPath", resolvedTarget], ["configPath", resolvedConfig]]) {
+      if (!fs.existsSync(candidate)) throw new McpError(ErrorCode.InvalidParams, `${label} nicht gefunden: ${candidate}`);
+    }
+
+    const binary = path.join(this.suitePath, "vendor/bin/fractor");
+    if (!fs.existsSync(binary)) {
+      throw new McpError(ErrorCode.InternalError, `Fractor nicht gefunden. Führe 'composer install' in ${this.suitePath} aus.`);
+    }
+
+    const command = `"${binary}" process "${resolvedTarget}" --config "${resolvedConfig}" --no-progress-bar${dryRun ? " --dry-run" : ""}`;
+    let output: string;
+    try {
+      output = execSync(command, { encoding: "utf8", maxBuffer: 10 * 1024 * 1024, cwd: this.suitePath });
+    } catch (error: any) {
+      output = error.stdout || error.stderr || String(error);
+    }
+
+    return {
+      content: [{
+        type: "text",
+        text: JSON.stringify({
+          target: resolvedTarget,
+          config: resolvedConfig,
+          dryRun,
+          output,
+          note: "Generierte Fractor-Regeln sind EXPERIMENTAL. Änderungen vor dem Commit prüfen."
+        }, null, 2)
+      }]
     };
   }
 
