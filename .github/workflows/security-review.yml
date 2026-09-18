@@ -1,0 +1,39 @@
+name: TYPO3 Security Review Suggestions
+
+on:
+  workflow_run:
+    workflows: [TYPO3 Security Audit]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: write
+
+concurrency:
+  group: security-review-${{ github.event.workflow_run.head_branch }}-${{ github.event.workflow_run.head_repository.id }}
+  cancel-in-progress: false
+
+jobs:
+  review:
+    if: github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout trusted reviewer from the default branch
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Set up PHP parser runtime
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.5'
+          coverage: none
+      - name: Recompute suggestions and publish at the current PR head
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const { pathToFileURL } = require('node:url');
+            const modulePath = pathToFileURL(`${process.env.GITHUB_WORKSPACE}/scripts/publish-security-review.js`).href;
+            const { publishSecurityReview } = await import(modulePath);
+            await publishSecurityReview({ github, context, core });

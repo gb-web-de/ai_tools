@@ -62,6 +62,8 @@ Der MCP Server (`typo3-mcp-server`) stellt KI-Agenten folgende Werkzeuge live zu
 | `sync_security_advisories` | Liest TYPO3 Security Advisories via RSS-Feed (mit Offline-Fallback zu `.typo3-knowledge/`). |
 | `query_security_knowledge` | **Wissensabfrage**: Durchsucht bekannte CVEs, Anti-Patterns und gehärtete Vorher/Nachher-Lösungen. |
 | `record_security_learning` | **Continuous Learning**: Speichert neu gelernte Sicherheitsmuster oder Entwickler-Fixes persistent ab. |
+| `record_developer_fix` | Speichert einen deduplizierten Entwickler-Patch zunächst als `PENDING`. |
+| `review_developer_fix` | Hält die tatsächliche menschliche Freigabe oder Ablehnung eines Patches fest. |
 | `check_fluid_templates` | Gezielte Untersuchung von Fluid-Templates auf XSS. |
 
 ---
@@ -86,12 +88,29 @@ npm run sync-ai
 # MCP Server kompilieren
 npm run build
 
-# Vollständigen Testlauf starten (Sync + MCP Build + PHPStan-Rules)
+# Vollständigen Testlauf starten (MCP, Learning, Rector-Fixtures, PR-Review, PHPStan)
 npm test
 
 # Fluid Template XSS Scanner testen
 npm run test:fluid
+
+# Advisories einlesen, klassifizieren und experimentelle Fixtures erzeugen
+npm run learn:advisories
+
+# Einen lokalen Feed ohne Schreibzugriff prüfen
+npm run learn:advisories -- --input ./advisories.json --dry-run
+
+# Lokalen Wissensgraphen aufbauen und deutsch/englisch durchsuchen
+npm run knowledge:index
+npm run knowledge:query -- --query "Mandantentrennung"
+
+# Aus wiederholt freigegebenen Fixes getestete Rector-Kandidaten erzeugen
+npm run learn:rector
 ```
+
+Der Advisory-Distiller übernimmt nur bekannte Schwachstellenklassen in ausführbare Test-Fixtures. Unbekannte Kategorien bleiben als `UNCLASSIFIED` im Wissensspeicher und müssen vor einer Regelerzeugung menschlich geprüft werden.
+
+Meilenstein 3 bringt außerdem einen GitHub-PR-Bot mit Patch-Artefakten und Inline-Vorschlägen. Die unterstützten Muster, Review-Voraussetzungen und Einrichtung der Workflows stehen in [docs/CONTINUOUS_LEARNING.md](docs/CONTINUOUS_LEARNING.md).
 
 ---
 

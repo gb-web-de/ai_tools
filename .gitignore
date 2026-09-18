@@ -6,6 +6,8 @@ vendor/
 typo3-mcp-server/build/
 dist/
 *.tsbuildinfo
+.typo3-knowledge/graph.jsonl
+.typo3-knowledge/.learning.lock
 
 # Temporary & Caches
 .cache/

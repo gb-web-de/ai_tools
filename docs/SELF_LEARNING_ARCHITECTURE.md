@@ -1,7 +1,7 @@
 # Autonome & Selbstlernende TYPO3 AI-Sicherheitsarchitektur
 ## Master-Dokumentation: Continuous Learning, Vulnerability Intelligence & Self-Healing
 
-> **Status:** Konzept & Architektur-Leitfaden  
+> **Status:** Meilensteine 1–3 implementiert; Meilenstein 4 geplant; L4/L5 bleiben schrittweise auszubauen
 > **Zielsysteme:** TYPO3 v12 / v13 / v14  
 > **Integrationen:** Model Context Protocol (MCP), Cursor, Claude Code, Windsurf, GitHub Copilot, PHPStan AST, Rector  
 
@@ -158,7 +158,7 @@ Wenn ein Entwickler entscheidet: *"In diesem speziellen Fall ist `f:format.raw()
 | **L1** | **Statische Regeln** | Feste PHPStan-Regeln, Regex-Scanner, manuelle Dokumentation. | ✅ **Erreicht** |
 | **L2** | **Multi-AI Synchronisation** | Single Source of Truth (`ai-rules/`), automatische Generierung von Cursor-, Claude-, Copilot- und Windsurf-Configs. | ✅ **Erreicht** |
 | **L3** | **Bedrohungs-Ingestion** | MCP liest TYPO3 Security Advisories ein und stellt sie der KI zur Verfügung. | ✅ **Erreicht** |
-| **L4** | **Wissens-Destillation & Fixture-Evolution** | Neue Advisories erzeugen automatisch Test-Fixtures und Entwürfe neuer PHPStan-Rules; Fehler im CI werden als Fixture gelernt. | 🔄 **In Konzeption** |
+| **L4** | **Wissens-Destillation & Fixture-Evolution** | Neue Advisories erzeugen automatisch Test-Fixtures und Entwürfe neuer PHPStan-Rules; Fehler im CI werden als Fixture gelernt. | 🧪 **Teilimplementiert** |
 | **L5** | **Vollautonome Selbstheilung (Auto-Remediation)** | KI erkennt Lücken flottenweit, baut Rector/AST-Fixes, verifiziert sie in isolierten Containern und stellt fertige PRs. | 🎯 **Zielvision** |
 
 ---
@@ -168,7 +168,7 @@ Wenn ein Entwickler entscheidet: *"In diesem speziellen Fall ist `f:format.raw()
 Um Stufe 4 und 5 zu erreichen, implementieren wir folgende drei Kernmodule:
 
 ### Baustein 1: Der Advisory Knowledge Distiller (`scripts/learn-advisories.js`)
-Ein Skript, das die TYPO3 RSS-Advisories durchläuft und per LLM analysiert:
+Ein Skript, das die TYPO3 RSS-Advisories durchläuft und zunächst deterministisch gegen eine freigegebene Sicherheitstaxonomie analysiert. Nur bekannte Klassen erzeugen `EXPERIMENTAL`-Fixtures; unbekannte Inhalte bleiben `UNCLASSIFIED` und benötigen Human Review:
 ```typescript
 // Ablauf:
 // 1. Hole Advisory TYPO3-EXT-SA-2026-004
@@ -192,9 +192,9 @@ Eine leichtgewichtige SQLite- oder JSONL-Datenbank im Repository:
 ```
 
 ### Baustein 3: MCP-Erweiterung für dynamischen Kontext
-Zwei neue MCP-Tools im Server:
-1. `learn_from_patch`: Erlaubt es Entwicklern oder CI/CD-Pipelines, einen Git-Diff an den MCP-Server zu übergeben. Der Server analysiert, ob es sich um einen Security-Fix handelt, und speichert das gelernte Muster ab.
-2. `query_knowledge_base`: Erlaubt es jedem LLM, nach spezifischen Lösungen für eine gemeldete Schwachstelle zu suchen.
+Implementierte MCP-Schnittstellen:
+1. `record_developer_fix` und `review_developer_fix`: Erfassen einen Unified Diff samt Typ, Herkunft und explizitem Review-Status. Die Erfassung alleine bestätigt nicht die Sicherheit eines Patches.
+2. `query_security_knowledge`: Lokale, deutsch/englische Begriffssuche mit Ranking und Beziehungen zwischen Advisories, Mustern und Entwickler-Fixes.
 
 ---
 
@@ -207,14 +207,38 @@ Zwei neue MCP-Tools im Server:
 * [x] Test-Fixture-Infrastruktur (`tests/fixtures/vulnerable_extension/`).
 
 ### Meilenstein 2 (Kurzfristig: Q4)
-* [ ] Automatisierter Advisory-Parser: `npm run learn:advisories`.
-* [ ] Dynamische Generierung von PHP-Testfixtures aus neu erkannten Advisories.
-* [ ] Implementierung des MCP-Tools `record_developer_fix` für Human-in-the-Loop Feedback.
+* [x] Automatisierter Advisory-Parser: `npm run learn:advisories` (RSS/JSON, Offline- und Dry-Run-fähig).
+* [x] Dynamische Generierung von strikt typisierten PHP-Testfixtures aus erkannten Advisory-Klassen.
+* [x] Implementierung des MCP-Tools `record_developer_fix` für dedupliziertes Human-in-the-Loop Feedback in `fixes_history.jsonl`.
 
-### Meilenstein 3 (Mittelfristig: Q1/Q2)
-* [ ] Lokaler SQLite/JSONL Knowledge Graph für Semantische Suche nach TYPO3-Sicherheitslösungen.
-* [ ] Automatisierte Generierung von Rector-Regeln bei wiederkehrenden Code-Smells.
-* [ ] GitHub Action: Automatischer Security-Audit-Bot, der verwundbare PRs nicht nur kommentiert, sondern direkt den korrigierten Patch als Review-Vorschlag anhängt.
+#### Sicherheits-Gates von Meilenstein 2
+* Feed-Inhalte bestimmen niemals frei Dateinamen oder ausführbaren PHP-Code.
+* Nur die feste Taxonomie erzeugt Fixtures; unbekannte Kategorien werden nicht synthetisiert.
+* Gelernte Fixtures starten immer als `EXPERIMENTAL` und werden erst nach Vulnerable-/Safe-Code-Regressionstests zu `STRICT` befördert.
+* Entwickler-Fixes benötigen einen echten Unified Diff, sind auf 200 KB begrenzt und werden über einen SHA-256-Fingerprint dedupliziert.
+
+### Meilenstein 3 (Implementiert: 18.09.2026)
+* [x] Lokaler JSONL-Wissensgraph mit begriffsbasierter semantischer Suche (DE/EN), Ranking, Herkunft und Beziehungen; CLI und MCP nutzen dieselbe Suche.
+* [x] Automatisierte, vorlagenbasierte Rector-Regelerzeugung aus wiederholten freigegebenen Fixes. Erstes unterstütztes Muster: `unserialize_disallow_classes`; echte Rector-Fixture-Prüfung vor Ausgabe.
+* [x] GitHub-PR-Audit mit Patch-Artefakt und Inline-Review-Vorschlägen für unterstützte Fluid-/Deserialisierungsfälle; Analyse und PR-Schreibrechte sind getrennt.
+
+Betrieb, Befehle, Voraussetzungen und die genauen Grenzen sind in [CONTINUOUS_LEARNING.md](CONTINUOUS_LEARNING.md) beschrieben. Die Workflows sind lokal vorbereitet und getestet; eine echte Veröffentlichung auf GitHub erfolgt erst nach Aufnahme in den Default-Branch. Freie LLM-Regelsynthese, Embedding-Suche und vollautonome Patch-Freigabe gehören weiterhin nicht zum implementierten Umfang.
+
+### Meilenstein 4 (Geplant: Wissensgraph im Team und projektübergreifend teilen)
+
+Ziel ist ein gemeinsamer, versionierter Wissensbestand in einem privaten Git-Repository. Entwickler und Projekte verwenden lokale Kopien; neue Erkenntnisse werden über Pull Requests geprüft und anschließend synchronisiert. Geteilt werden die Quelldaten `advisories.json`, `learned_patterns.json` und – sofern vorhanden – `fixes_history.jsonl`. Der abgeleitete `graph.jsonl` wird lokal neu aufgebaut.
+
+* [ ] Einheitliche Speicher-Konfiguration über `TYPO3_KNOWLEDGE_PATH` für MCP und alle Learning-CLIs, einschließlich des bislang auf den Projektordner festgelegten Advisory-Imports.
+* [ ] Kontrollierter Export/Import mit versioniertem Austauschformat, Schema-Validierung, Herkunftsangaben und Vorschau der Änderungen.
+* [ ] Git-basierter Team-Workflow mit dokumentierter Einrichtung, expliziter Synchronisierung und Review neuer Einträge über Pull Requests.
+* [ ] Deduplizierung und Konfliktbehandlung für parallele Änderungen; lokale Ergänzungen, Review-Status und Ablehnungen nachvollziehbar zusammenführen.
+* [ ] Freigabeprozess für geteilte Inhalte: Code-Diffs und interne Referenzen vor dem Export auf vertrauliche Daten prüfen und bei Bedarf bereinigen; inhaltlich veränderte Fixes erneut reviewen.
+* [ ] Gemeinsamen Wissensbestand nach dem Import lokal indexieren und über dieselben CLI-/MCP-Suchfunktionen in mehreren Projekten verwenden.
+* [ ] Integrationstests mit zwei getrennten lokalen Kopien für Austausch, wiederholten Import, Konflikte und ungültige Daten sowie eine Team-Betriebsanleitung.
+
+**Abnahmekriterien:** Ein freigegebener Lernfall aus Projekt A lässt sich in Projekt B übernehmen und dort mit Herkunft und Review-Status finden. Wiederholte Importe erzeugen keine Duplikate. Konflikte und ungültige Daten werden gemeldet, bestehendes Wissen bleibt erhalten. Ein Import allein erteilt keine neue Freigabe und aktiviert keine Rector-Regel.
+
+**Optionaler späterer Ausbau:** Zentraler Wissensdienst mit authentifiziertem Netzwerkzugriff, Rollen und zentraler Schreibverwaltung. Die erste Umsetzung dieses Meilensteins konzentriert sich auf den Git-basierten Austausch.
 
 ---
 

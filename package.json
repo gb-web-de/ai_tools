@@ -10,10 +10,17 @@
   "scripts": {
     "sync-ai": "node scripts/sync-ai-configs.js",
     "setup:project": "node scripts/setup-project.js",
+    "learn:advisories": "node scripts/learn-advisories.js",
+    "knowledge:index": "node scripts/knowledge.js --index",
+    "knowledge:query": "node scripts/knowledge.js",
+    "learn:rector": "node scripts/generate-rector.js",
+    "audit:pr": "node scripts/security-audit-pr.js",
     "build": "npm run build --workspace=typo3-mcp-server",
+    "test:advisories": "node --test tests/advisory-distiller.test.js",
+    "test:learning": "npm run build && node --test tests/knowledge-store.test.js tests/security-review.test.js tests/mcp-learning.test.js tests/rector-learning.test.js",
     "test:phpstan": "cd typo3-security-suite && ./vendor/bin/phpstan analyse -c phpstan.neon rules/",
     "test:fluid": "python3 typo3-security-suite/scripts/scan_fluid_xss.py tests/fixtures/vulnerable_extension/Resources/Private/Templates/",
-    "test": "npm run sync-ai && npm run build && npm run test:phpstan"
+    "test": "npm run test:advisories && npm run test:learning && npm run test:phpstan"
   },
   "keywords": [
     "typo3",
