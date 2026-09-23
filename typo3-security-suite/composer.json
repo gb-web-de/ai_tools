@@ -3,9 +3,9 @@
     "description": "Automated Security Audit & Static Code Analysis Suite for TYPO3 Extensions",
     "type": "library",
     "require-dev": {
-        "phpstan/phpstan": "^1.10 || ^2.0",
-        "rector/rector": "^0.18 || ^1.0 || ^2.0",
-        "saschaegerer/phpstan-typo3": "^1.8",
+        "phpstan/phpstan": "^2.1",
+        "rector/rector": "^2.0",
+        "saschaegerer/phpstan-typo3": "^3.0",
         "a9f/fractor": "^1.0",
         "a9f/fractor-typoscript": "^1.0",
         "a9f/fractor-fluid": "^1.0"
