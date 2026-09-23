@@ -67,6 +67,36 @@ class Typo3SecurityMcpServer {
     return candidates[0];
   }
 
+  /**
+   * Sucht die vendor/autoload.php des ZIELPROJEKTS, ausgehend vom Scanpfad
+   * nach oben.
+   *
+   * Ohne sie kennt PHPStan nur den TYPO3-Kern, den die Stubs von
+   * saschaegerer/phpstan-typo3 mitbringen. Alles andere - b13/container,
+   * Fremd-Extensions, der Code des Projekts selbst - ist dann eine unbekannte
+   * Klasse, und jede Zeile, die sie anfasst, wird als Fehler gemeldet. Ein
+   * Scan der TCA-Overrides eines echten Projekts lieferte so 24 Meldungen bei
+   * null Sicherheitsbefunden: Rauschen, in dem ein echter Fund untergeht.
+   *
+   * Die Sicherheitsregeln selbst laufen auch ohne - das ist nachgemessen, die
+   * SQLi-Regel greift in beiden Faellen, weil sie auf Kernklassen typt. Es geht
+   * hier um die Lesbarkeit des Ergebnisses, nicht um die Erkennungsleistung.
+   */
+  private findTargetAutoload(targetPath: string): string | null {
+    let dir = fs.statSync(targetPath).isDirectory()
+      ? path.resolve(targetPath)
+      : path.dirname(path.resolve(targetPath));
+
+    while (true) {
+      const candidate = path.join(dir, "vendor", "autoload.php");
+      if (fs.existsSync(candidate)) return candidate;
+
+      const parent = path.dirname(dir);
+      if (parent === dir) return null;
+      dir = parent;
+    }
+  }
+
   private resolveKnowledgePath(): string {
     const configuredPath = process.env.TYPO3_KNOWLEDGE_PATH;
     if (configuredPath) {
@@ -472,10 +502,15 @@ class Typo3SecurityMcpServer {
       );
     }
 
+    const targetAutoload = this.findTargetAutoload(resolvedTarget);
+    const autoloadFlag = targetAutoload
+      ? ` --autoload-file="${targetAutoload}"`
+      : "";
+
     let output = "";
     try {
       output = execSync(
-        `"${phpstanBin}" analyse -c "${phpstanNeon}" --error-format=json --no-progress "${resolvedTarget}"`,
+        `"${phpstanBin}" analyse -c "${phpstanNeon}" --error-format=json --no-progress${autoloadFlag} "${resolvedTarget}"`,
         {
           cwd: this.suitePath,
           encoding: "utf8",
