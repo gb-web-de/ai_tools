@@ -1,5 +1,305 @@
 [
   {
+    "id": "TYPO3-CORE-SA-2026-008",
+    "type": "BROKEN_ACCESS_CONTROL",
+    "severity": "HIGH",
+    "title": "TYPO3-CORE-SA-2026-008: Broken Access Control in Form Framework",
+    "description": "It has been discovered that TYPO3 CMS is susceptible to broken access control.",
+    "link": "https://news.typo3.com/security/advisory/typo3-core-sa-2026-008",
+    "published_at": "Tue, 09 Jun 2026 12:08:00 +0200",
+    "confidence": "EXPERIMENTAL",
+    "vulnerable_code": "$repository->update($model);",
+    "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }",
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "BROKEN_ACCESS_CONTROL",
+        "severity": "HIGH",
+        "vulnerable_code": "$repository->update($model);",
+        "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }"
+      }
+    ]
+  },
+  {
+    "id": "TYPO3-CORE-SA-2026-009",
+    "type": "OPEN_REDIRECT",
+    "severity": "MEDIUM",
+    "title": "TYPO3-CORE-SA-2026-009: Open Redirect in TYPO3 CMS",
+    "description": "It has been discovered that TYPO3 CMS is susceptible to open redirect.",
+    "link": "https://news.typo3.com/security/advisory/typo3-core-sa-2026-009",
+    "published_at": "Tue, 09 Jun 2026 12:09:00 +0200",
+    "confidence": "EXPERIMENTAL",
+    "vulnerable_code": "header('Location: ' . $userInput);",
+    "secure_code": "if (parse_url($userInput, PHP_URL_HOST) !== null || !str_starts_with($userInput, '/')) { throw new \\InvalidArgumentException('Only relative redirect targets are allowed'); }",
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "OPEN_REDIRECT",
+        "severity": "MEDIUM",
+        "vulnerable_code": "header('Location: ' . $userInput);",
+        "secure_code": "if (parse_url($userInput, PHP_URL_HOST) !== null || !str_starts_with($userInput, '/')) { throw new \\InvalidArgumentException('Only relative redirect targets are allowed'); }"
+      }
+    ]
+  },
+  {
+    "id": "TYPO3-CORE-SA-2026-010",
+    "type": "XSS",
+    "severity": "HIGH",
+    "title": "TYPO3-CORE-SA-2026-010: Cross-Site Scripting in Indexed Search",
+    "description": "It has been discovered that TYPO3 CMS is vulnerable to cross-site scripting.",
+    "link": "https://news.typo3.com/security/advisory/typo3-core-sa-2026-010",
+    "published_at": "Tue, 09 Jun 2026 12:10:00 +0200",
+    "confidence": "EXPERIMENTAL",
+    "vulnerable_code": "echo $userInput;",
+    "secure_code": "echo htmlspecialchars($userInput, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');",
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "XSS",
+        "severity": "HIGH",
+        "vulnerable_code": "echo $userInput;",
+        "secure_code": "echo htmlspecialchars($userInput, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');"
+      }
+    ]
+  },
+  {
+    "id": "TYPO3-CORE-SA-2026-011",
+    "type": "BROKEN_ACCESS_CONTROL",
+    "severity": "HIGH",
+    "title": "TYPO3-CORE-SA-2026-011: Broken Access Control in Recycler",
+    "description": "It has been discovered that TYPO3 CMS is susceptible to broken access control.",
+    "link": "https://news.typo3.com/security/advisory/typo3-core-sa-2026-011",
+    "published_at": "Tue, 09 Jun 2026 12:11:00 +0200",
+    "confidence": "EXPERIMENTAL",
+    "vulnerable_code": "$repository->update($model);",
+    "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }",
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "BROKEN_ACCESS_CONTROL",
+        "severity": "HIGH",
+        "vulnerable_code": "$repository->update($model);",
+        "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }"
+      }
+    ]
+  },
+  {
+    "id": "TYPO3-CORE-SA-2026-012",
+    "type": "BROKEN_ACCESS_CONTROL",
+    "severity": "HIGH",
+    "title": "TYPO3-CORE-SA-2026-012: Broken Access Control in DataHandler",
+    "description": "It has been discovered that TYPO3 CMS is susceptible to broken access control.",
+    "link": "https://news.typo3.com/security/advisory/typo3-core-sa-2026-012",
+    "published_at": "Tue, 09 Jun 2026 12:12:00 +0200",
+    "confidence": "EXPERIMENTAL",
+    "vulnerable_code": "$repository->update($model);",
+    "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }",
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "BROKEN_ACCESS_CONTROL",
+        "severity": "HIGH",
+        "vulnerable_code": "$repository->update($model);",
+        "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }"
+      }
+    ]
+  },
+  {
+    "id": "TYPO3-CORE-SA-2026-013",
+    "type": "BROKEN_ACCESS_CONTROL",
+    "severity": "HIGH",
+    "title": "TYPO3-CORE-SA-2026-013: Broken Access Control in Media Module",
+    "description": "It has been discovered that TYPO3 CMS is susceptible to broken access control.",
+    "link": "https://news.typo3.com/security/advisory/typo3-core-sa-2026-013",
+    "published_at": "Tue, 09 Jun 2026 12:13:00 +0200",
+    "confidence": "EXPERIMENTAL",
+    "vulnerable_code": "$repository->update($model);",
+    "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }",
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "BROKEN_ACCESS_CONTROL",
+        "severity": "HIGH",
+        "vulnerable_code": "$repository->update($model);",
+        "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }"
+      }
+    ]
+  },
+  {
+    "id": "TYPO3-CORE-SA-2026-014",
+    "type": "BROKEN_ACCESS_CONTROL",
+    "severity": "HIGH",
+    "title": "TYPO3-CORE-SA-2026-014: Broken Access Control in Clipboard",
+    "description": "It has been discovered that TYPO3 CMS is susceptible to broken access control.",
+    "link": "https://news.typo3.com/security/advisory/typo3-core-sa-2026-014",
+    "published_at": "Tue, 09 Jun 2026 12:14:00 +0200",
+    "confidence": "EXPERIMENTAL",
+    "vulnerable_code": "$repository->update($model);",
+    "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }",
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "BROKEN_ACCESS_CONTROL",
+        "severity": "HIGH",
+        "vulnerable_code": "$repository->update($model);",
+        "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }"
+      }
+    ]
+  },
+  {
+    "id": "TYPO3-CORE-SA-2026-015",
+    "type": "BROKEN_ACCESS_CONTROL",
+    "severity": "HIGH",
+    "title": "TYPO3-CORE-SA-2026-015: Broken Access Control in Backend API",
+    "description": "It has been discovered that TYPO3 CMS is susceptible to broken access control.",
+    "link": "https://news.typo3.com/security/advisory/typo3-core-sa-2026-015",
+    "published_at": "Tue, 09 Jun 2026 12:15:00 +0200",
+    "confidence": "EXPERIMENTAL",
+    "vulnerable_code": "$repository->update($model);",
+    "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }",
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "BROKEN_ACCESS_CONTROL",
+        "severity": "HIGH",
+        "vulnerable_code": "$repository->update($model);",
+        "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }"
+      }
+    ]
+  },
+  {
+    "id": "TYPO3-CORE-SA-2026-016",
+    "type": "BROKEN_ACCESS_CONTROL",
+    "severity": "HIGH",
+    "title": "TYPO3-CORE-SA-2026-016: Broken Access Control in File Abstraction Layer",
+    "description": "It has been discovered that TYPO3 CMS is susceptible to broken access control.",
+    "link": "https://news.typo3.com/security/advisory/typo3-core-sa-2026-016",
+    "published_at": "Tue, 09 Jun 2026 12:16:00 +0200",
+    "confidence": "EXPERIMENTAL",
+    "vulnerable_code": "$repository->update($model);",
+    "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }",
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "BROKEN_ACCESS_CONTROL",
+        "severity": "HIGH",
+        "vulnerable_code": "$repository->update($model);",
+        "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }"
+      }
+    ]
+  },
+  {
+    "id": "TYPO3-CORE-SA-2026-017",
+    "type": "BROKEN_ACCESS_CONTROL",
+    "severity": "CRITICAL",
+    "title": "TYPO3-CORE-SA-2026-017: Privilege Escalation & SQL Injection in Form Framework",
+    "description": "It has been discovered that TYPO3 CMS is susceptible to broken access control.",
+    "link": "https://news.typo3.com/security/advisory/typo3-core-sa-2026-017",
+    "published_at": "Tue, 09 Jun 2026 12:17:00 +0200",
+    "confidence": "EXPERIMENTAL",
+    "vulnerable_code": "$repository->update($model);",
+    "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }",
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "BROKEN_ACCESS_CONTROL",
+        "severity": "HIGH",
+        "vulnerable_code": "$repository->update($model);",
+        "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }"
+      },
+      {
+        "type": "SQL_INJECTION",
+        "severity": "CRITICAL",
+        "vulnerable_code": "$queryBuilder->where('uid = ' . $userInput);",
+        "secure_code": "$queryBuilder->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($userInput, \\PDO::PARAM_INT)));"
+      }
+    ]
+  },
+  {
+    "id": "TYPO3-CORE-SA-2026-018",
+    "type": "DESERIALIZATION",
+    "severity": "CRITICAL",
+    "title": "TYPO3-CORE-SA-2026-018: Insecure Deserialization in Core API",
+    "description": "It has been discovered that TYPO3 CMS is susceptible to broken access control.",
+    "link": "https://news.typo3.com/security/advisory/typo3-core-sa-2026-018",
+    "published_at": "Tue, 09 Jun 2026 12:18:00 +0200",
+    "confidence": "EXPERIMENTAL",
+    "vulnerable_code": "$value = unserialize($userInput);",
+    "secure_code": "$value = json_decode($userInput, true, 512, JSON_THROW_ON_ERROR);",
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "DESERIALIZATION",
+        "severity": "CRITICAL",
+        "vulnerable_code": "$value = unserialize($userInput);",
+        "secure_code": "$value = json_decode($userInput, true, 512, JSON_THROW_ON_ERROR);"
+      }
+    ]
+  },
+  {
+    "id": "TYPO3-CORE-SA-2026-019",
+    "type": "BROKEN_ACCESS_CONTROL",
+    "severity": "HIGH",
+    "title": "TYPO3-CORE-SA-2026-019: Broken Access Control in Form Framework",
+    "description": "It has been discovered that TYPO3 CMS is susceptible to broken access control.",
+    "link": "https://news.typo3.com/security/advisory/typo3-core-sa-2026-019",
+    "published_at": "Tue, 09 Jun 2026 12:19:00 +0200",
+    "confidence": "EXPERIMENTAL",
+    "vulnerable_code": "$repository->update($model);",
+    "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }",
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "BROKEN_ACCESS_CONTROL",
+        "severity": "HIGH",
+        "vulnerable_code": "$repository->update($model);",
+        "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }"
+      }
+    ]
+  },
+  {
+    "id": "TYPO3-CORE-SA-2026-020",
+    "type": "FILE_UPLOAD",
+    "severity": "HIGH",
+    "title": "TYPO3-CORE-SA-2026-020: Unrestricted File Upload in Form Framework",
+    "description": "It has been discovered that TYPO3 CMS is susceptible to security misconfiguration.",
+    "link": "https://news.typo3.com/security/advisory/typo3-core-sa-2026-020",
+    "published_at": "Tue, 14 Jul 2026 12:00:00 +0200",
+    "confidence": "EXPERIMENTAL",
+    "vulnerable_code": "move_uploaded_file($_FILES['upload']['tmp_name'], 'fileadmin/' . $_FILES['upload']['name']);",
+    "secure_code": "$folder->addUploadedFile($uploadedFile, \\TYPO3\\CMS\\Core\\Resource\\Enum\\DuplicationBehavior::RENAME);",
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "FILE_UPLOAD",
+        "severity": "HIGH",
+        "vulnerable_code": "move_uploaded_file($_FILES['upload']['tmp_name'], 'fileadmin/' . $_FILES['upload']['name']);",
+        "secure_code": "$folder->addUploadedFile($uploadedFile, \\TYPO3\\CMS\\Core\\Resource\\Enum\\DuplicationBehavior::RENAME);"
+      }
+    ]
+  },
+  {
+    "id": "TYPO3-CORE-SA-2026-021",
+    "type": "BROKEN_ACCESS_CONTROL",
+    "severity": "HIGH",
+    "title": "TYPO3-CORE-SA-2026-021: Broken Access Control in Backend and Install Tool",
+    "description": "It has been discovered that TYPO3 CMS is susceptible to broken access control.",
+    "link": "https://news.typo3.com/security/advisory/typo3-core-sa-2026-021",
+    "published_at": "Tue, 11 Aug 2026 09:30:00 +0200",
+    "confidence": "EXPERIMENTAL",
+    "vulnerable_code": "$repository->update($model);",
+    "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }",
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "BROKEN_ACCESS_CONTROL",
+        "severity": "HIGH",
+        "vulnerable_code": "$repository->update($model);",
+        "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }"
+      }
+    ]
+  },
+  {
     "id": "TYPO3-CORE-SA-2026-022",
     "type": "DATA_LEAKAGE",
     "severity": "HIGH",
@@ -10,7 +310,15 @@
     "confidence": "EXPERIMENTAL",
     "vulnerable_code": "$querySettings->setIgnoreEnableFields(true);",
     "secure_code": "$querySettings->setIgnoreEnableFields(false);",
-    "source": "TYPO3_SECURITY_FEED"
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "DATA_LEAKAGE",
+        "severity": "HIGH",
+        "vulnerable_code": "$querySettings->setIgnoreEnableFields(true);",
+        "secure_code": "$querySettings->setIgnoreEnableFields(false);"
+      }
+    ]
   },
   {
     "id": "TYPO3-CORE-SA-2026-023",
@@ -23,7 +331,134 @@
     "confidence": "EXPERIMENTAL",
     "vulnerable_code": "$repository->update($model);",
     "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }",
-    "source": "TYPO3_SECURITY_FEED"
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "BROKEN_ACCESS_CONTROL",
+        "severity": "HIGH",
+        "vulnerable_code": "$repository->update($model);",
+        "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }"
+      }
+    ]
+  },
+  {
+    "id": "TYPO3-EXT-SA-2026-014",
+    "type": "RCE",
+    "severity": "CRITICAL",
+    "title": "TYPO3-EXT-SA-2026-014: Remote Code Execution in extension \"HTML5 Video Player vs. Powermail\" (html5videoplayer_powermail)",
+    "description": "It has been discovered that the extension \"HTML5 Video Player vs. Powermail\" (html5videoplayer_powermail) is vulnerable to Remote Code Execution.",
+    "link": "https://news.typo3.com/security/advisory/typo3-ext-sa-2026-014",
+    "published_at": "Tue, 25 Aug 2026 10:01:00 +0200",
+    "confidence": "EXPERIMENTAL",
+    "vulnerable_code": "shell_exec('convert ' . $userInput . ' output.png');",
+    "secure_code": "\\TYPO3\\CMS\\Core\\Utility\\CommandUtility::exec('convert ' . escapeshellarg($userInput) . ' output.png');",
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "RCE",
+        "severity": "CRITICAL",
+        "vulnerable_code": "shell_exec('convert ' . $userInput . ' output.png');",
+        "secure_code": "\\TYPO3\\CMS\\Core\\Utility\\CommandUtility::exec('convert ' . escapeshellarg($userInput) . ' output.png');"
+      }
+    ]
+  },
+  {
+    "id": "TYPO3-EXT-SA-2026-015",
+    "type": "UNCLASSIFIED",
+    "severity": "UNKNOWN",
+    "title": "TYPO3-EXT-SA-2026-015: Multiple Vulnerabilities in extension \"SYSSY - TYPO3 Monitoring & Security Checks\" (syssy)",
+    "description": "It has been discovered that the extension \"SYSSY - TYPO3 Monitoring & Security Checks\" (syssy) is vulnerable to Insufficient Session Expiration and Cleartext Transmission of Sensitive Information.",
+    "link": "https://news.typo3.com/security/advisory/typo3-ext-sa-2026-015",
+    "published_at": "Tue, 25 Aug 2026 10:02:00 +0200",
+    "confidence": "UNCLASSIFIED",
+    "vulnerable_code": "",
+    "secure_code": "",
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": []
+  },
+  {
+    "id": "TYPO3-EXT-SA-2026-016",
+    "type": "DATA_LEAKAGE",
+    "severity": "HIGH",
+    "title": "TYPO3-EXT-SA-2026-016: Information Disclosure in extension \"Modules\" (modules)",
+    "description": "It has been discovered that the extension \"Modules\" (modules) is vulnerable to Information Disclosure.",
+    "link": "https://news.typo3.com/security/advisory/typo3-ext-sa-2026-016",
+    "published_at": "Tue, 25 Aug 2026 10:03:00 +0200",
+    "confidence": "EXPERIMENTAL",
+    "vulnerable_code": "$querySettings->setIgnoreEnableFields(true);",
+    "secure_code": "$querySettings->setIgnoreEnableFields(false);",
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "DATA_LEAKAGE",
+        "severity": "HIGH",
+        "vulnerable_code": "$querySettings->setIgnoreEnableFields(true);",
+        "secure_code": "$querySettings->setIgnoreEnableFields(false);"
+      }
+    ]
+  },
+  {
+    "id": "TYPO3-EXT-SA-2026-017",
+    "type": "PATH_TRAVERSAL",
+    "severity": "HIGH",
+    "title": "TYPO3-EXT-SA-2026-017: Path Traversal in extension \"Mask\" (mask)",
+    "description": "It has been discovered that the extension \"Mask\" (mask) is vulnerable to Path Traversal.",
+    "link": "https://news.typo3.com/security/advisory/typo3-ext-sa-2026-017",
+    "published_at": "Tue, 25 Aug 2026 10:04:00 +0200",
+    "confidence": "EXPERIMENTAL",
+    "vulnerable_code": "$content = file_get_contents(\\TYPO3\\CMS\\Core\\Core\\Environment::getPublicPath() . '/fileadmin/' . $userInput);",
+    "secure_code": "$path = \\TYPO3\\CMS\\Core\\Utility\\GeneralUtility::getFileAbsFileName('fileadmin/' . $userInput); if ($path === '') { throw new \\InvalidArgumentException('Invalid path'); }",
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "PATH_TRAVERSAL",
+        "severity": "HIGH",
+        "vulnerable_code": "$content = file_get_contents(\\TYPO3\\CMS\\Core\\Core\\Environment::getPublicPath() . '/fileadmin/' . $userInput);",
+        "secure_code": "$path = \\TYPO3\\CMS\\Core\\Utility\\GeneralUtility::getFileAbsFileName('fileadmin/' . $userInput); if ($path === '') { throw new \\InvalidArgumentException('Invalid path'); }"
+      }
+    ]
+  },
+  {
+    "id": "TYPO3-EXT-SA-2026-018",
+    "type": "BROKEN_ACCESS_CONTROL",
+    "severity": "HIGH",
+    "title": "TYPO3-EXT-SA-2026-018: Broken Access Control in extension \"Telephone Directory\" (telephonedirectory)",
+    "description": "It has been discovered that the extension \"Telephone Directory\" (telephonedirectory) is susceptible to Broken Access Control.",
+    "link": "https://news.typo3.com/security/advisory/typo3-ext-sa-2026-018",
+    "published_at": "Tue, 25 Aug 2026 10:05:00 +0200",
+    "confidence": "EXPERIMENTAL",
+    "vulnerable_code": "$repository->update($model);",
+    "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }",
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "BROKEN_ACCESS_CONTROL",
+        "severity": "HIGH",
+        "vulnerable_code": "$repository->update($model);",
+        "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }"
+      }
+    ]
+  },
+  {
+    "id": "TYPO3-EXT-SA-2026-019",
+    "type": "BROKEN_ACCESS_CONTROL",
+    "severity": "HIGH",
+    "title": "TYPO3-EXT-SA-2026-019: Broken Access Control in extension \"Club Directory\" (clubdirectory)",
+    "description": "It has been discovered that the extension \"Club Directory\" (clubdirectory) is susceptible to Broken Access Control.",
+    "link": "https://news.typo3.com/security/advisory/typo3-ext-sa-2026-019",
+    "published_at": "Tue, 25 Aug 2026 10:06:00 +0200",
+    "confidence": "EXPERIMENTAL",
+    "vulnerable_code": "$repository->update($model);",
+    "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }",
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "BROKEN_ACCESS_CONTROL",
+        "severity": "HIGH",
+        "vulnerable_code": "$repository->update($model);",
+        "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }"
+      }
+    ]
   },
   {
     "id": "TYPO3-EXT-SA-2026-020",
@@ -36,7 +471,15 @@
     "confidence": "EXPERIMENTAL",
     "vulnerable_code": "$repository->update($model);",
     "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }",
-    "source": "TYPO3_SECURITY_FEED"
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "BROKEN_ACCESS_CONTROL",
+        "severity": "HIGH",
+        "vulnerable_code": "$repository->update($model);",
+        "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }"
+      }
+    ]
   },
   {
     "id": "TYPO3-EXT-SA-2026-021",
@@ -49,33 +492,63 @@
     "confidence": "EXPERIMENTAL",
     "vulnerable_code": "$repository->update($model);",
     "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }",
-    "source": "TYPO3_SECURITY_FEED"
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "BROKEN_ACCESS_CONTROL",
+        "severity": "HIGH",
+        "vulnerable_code": "$repository->update($model);",
+        "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }"
+      }
+    ]
   },
   {
     "id": "TYPO3-EXT-SA-2026-022",
-    "type": "UNCLASSIFIED",
-    "severity": "UNKNOWN",
+    "type": "SSTI",
+    "severity": "CRITICAL",
     "title": "TYPO3-EXT-SA-2026-022: Server-Side Template Injection (SSTI) in extension \"powermail\" (powermail)",
     "description": "It has been discovered that the extension \"powermail\" (powermail) is vulnerable to Server-Side Template Injection (SSTI).",
     "link": "https://news.typo3.com/security/advisory/typo3-ext-sa-2026-022",
     "published_at": "Tue, 25 Aug 2026 10:09:00 +0200",
-    "confidence": "UNCLASSIFIED",
-    "vulnerable_code": "",
-    "secure_code": "",
-    "source": "TYPO3_SECURITY_FEED"
+    "confidence": "EXPERIMENTAL",
+    "vulnerable_code": "$view->setTemplateSource($userInput);",
+    "secure_code": "$view->assign('userInput', $userInput);",
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "SSTI",
+        "severity": "CRITICAL",
+        "vulnerable_code": "$view->setTemplateSource($userInput);",
+        "secure_code": "$view->assign('userInput', $userInput);"
+      }
+    ]
   },
   {
     "id": "TYPO3-EXT-SA-2026-023",
-    "type": "BROKEN_ACCESS_CONTROL",
-    "severity": "HIGH",
+    "type": "SSTI",
+    "severity": "CRITICAL",
     "title": "TYPO3-EXT-SA-2026-023: Multiple vulnerabilities in extension \"Event management and registration\" (sf_event_mgt)",
     "description": "It has been discovered that the extension \"Event management and registration\" (sf_event_mgt) is vulnerable to Broken Access Control and Server-Side Template Injection (SSTI).",
     "link": "https://news.typo3.com/security/advisory/typo3-ext-sa-2026-023",
     "published_at": "Tue, 25 Aug 2026 10:10:00 +0200",
     "confidence": "EXPERIMENTAL",
-    "vulnerable_code": "$repository->update($model);",
-    "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }",
-    "source": "TYPO3_SECURITY_FEED"
+    "vulnerable_code": "$view->setTemplateSource($userInput);",
+    "secure_code": "$view->assign('userInput', $userInput);",
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "SSTI",
+        "severity": "CRITICAL",
+        "vulnerable_code": "$view->setTemplateSource($userInput);",
+        "secure_code": "$view->assign('userInput', $userInput);"
+      },
+      {
+        "type": "BROKEN_ACCESS_CONTROL",
+        "severity": "HIGH",
+        "vulnerable_code": "$repository->update($model);",
+        "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }"
+      }
+    ]
   },
   {
     "id": "TYPO3-EXT-SA-2026-024",
@@ -88,20 +561,54 @@
     "confidence": "EXPERIMENTAL",
     "vulnerable_code": "$repository->update($model);",
     "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }",
-    "source": "TYPO3_SECURITY_FEED"
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "BROKEN_ACCESS_CONTROL",
+        "severity": "HIGH",
+        "vulnerable_code": "$repository->update($model);",
+        "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }"
+      },
+      {
+        "type": "DATA_LEAKAGE",
+        "severity": "HIGH",
+        "vulnerable_code": "$querySettings->setIgnoreEnableFields(true);",
+        "secure_code": "$querySettings->setIgnoreEnableFields(false);"
+      }
+    ]
   },
   {
     "id": "TYPO3-EXT-SA-2026-025",
-    "type": "BROKEN_ACCESS_CONTROL",
-    "severity": "HIGH",
+    "type": "DESERIALIZATION",
+    "severity": "CRITICAL",
     "title": "TYPO3-EXT-SA-2026-025: Multiple Vulnerabilities in extension \"Apache Solr for TYPO3 - Enterprise Search\" (solr)",
     "description": "It has been discovered that the extension \"Apache Solr for TYPO3 - Enterprise Search\" (solr) is vulnerable to Broken Access Control, Insecure Deserialization and Information Disclosure.",
     "link": "https://news.typo3.com/security/advisory/typo3-ext-sa-2026-025",
     "published_at": "Tue, 25 Aug 2026 10:12:00 +0200",
     "confidence": "EXPERIMENTAL",
-    "vulnerable_code": "$repository->update($model);",
-    "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }",
-    "source": "TYPO3_SECURITY_FEED"
+    "vulnerable_code": "$value = unserialize($userInput);",
+    "secure_code": "$value = json_decode($userInput, true, 512, JSON_THROW_ON_ERROR);",
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "DESERIALIZATION",
+        "severity": "CRITICAL",
+        "vulnerable_code": "$value = unserialize($userInput);",
+        "secure_code": "$value = json_decode($userInput, true, 512, JSON_THROW_ON_ERROR);"
+      },
+      {
+        "type": "BROKEN_ACCESS_CONTROL",
+        "severity": "HIGH",
+        "vulnerable_code": "$repository->update($model);",
+        "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }"
+      },
+      {
+        "type": "DATA_LEAKAGE",
+        "severity": "HIGH",
+        "vulnerable_code": "$querySettings->setIgnoreEnableFields(true);",
+        "secure_code": "$querySettings->setIgnoreEnableFields(false);"
+      }
+    ]
   },
   {
     "id": "TYPO3-EXT-SA-2026-026",
@@ -114,7 +621,15 @@
     "confidence": "EXPERIMENTAL",
     "vulnerable_code": "$repository->update($model);",
     "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }",
-    "source": "TYPO3_SECURITY_FEED"
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "BROKEN_ACCESS_CONTROL",
+        "severity": "HIGH",
+        "vulnerable_code": "$repository->update($model);",
+        "secure_code": "if (!$authorizationService->isAllowed($model)) { throw new \\RuntimeException('Access denied'); }"
+      }
+    ]
   },
   {
     "id": "TYPO3-EXT-SA-2026-027",
@@ -127,7 +642,15 @@
     "confidence": "EXPERIMENTAL",
     "vulnerable_code": "$queryBuilder->where('uid = ' . $userInput);",
     "secure_code": "$queryBuilder->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($userInput, \\PDO::PARAM_INT)));",
-    "source": "TYPO3_SECURITY_FEED"
+    "source": "TYPO3_SECURITY_FEED",
+    "findings": [
+      {
+        "type": "SQL_INJECTION",
+        "severity": "CRITICAL",
+        "vulnerable_code": "$queryBuilder->where('uid = ' . $userInput);",
+        "secure_code": "$queryBuilder->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($userInput, \\PDO::PARAM_INT)));"
+      }
+    ]
   },
   {
     "id": "TYPO3-PSA-2024-001",
