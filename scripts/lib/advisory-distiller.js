@@ -45,7 +45,48 @@ const TAXONOMY = [
     vulnerable: "$response = file_get_contents($userInput);",
     secure: "if (!in_array(parse_url($userInput, PHP_URL_HOST), ['api.example.com'], true)) { throw new \\InvalidArgumentException('Host not allowed'); }",
   },
+  {
+    type: "FILE_UPLOAD",
+    severity: "HIGH",
+    terms: ["unrestricted file upload", "arbitrary file upload", "file upload"],
+    vulnerable: "move_uploaded_file($_FILES['upload']['tmp_name'], 'fileadmin/' . $_FILES['upload']['name']);",
+    secure: "$folder->addUploadedFile($uploadedFile, \\TYPO3\\CMS\\Core\\Resource\\Enum\\DuplicationBehavior::RENAME);",
+  },
+  {
+    type: "OPEN_REDIRECT",
+    severity: "MEDIUM",
+    terms: ["open redirect", "unvalidated redirect"],
+    vulnerable: "header('Location: ' . $userInput);",
+    secure: "if (parse_url($userInput, PHP_URL_HOST) !== null || !str_starts_with($userInput, '/')) { throw new \\InvalidArgumentException('Only relative redirect targets are allowed'); }",
+  },
+  {
+    type: "PATH_TRAVERSAL",
+    severity: "HIGH",
+    terms: ["path traversal", "directory traversal", "local file inclusion"],
+    vulnerable: "$content = file_get_contents(\\TYPO3\\CMS\\Core\\Core\\Environment::getPublicPath() . '/fileadmin/' . $userInput);",
+    secure: "$path = \\TYPO3\\CMS\\Core\\Utility\\GeneralUtility::getFileAbsFileName('fileadmin/' . $userInput); if ($path === '') { throw new \\InvalidArgumentException('Invalid path'); }",
+  },
+  {
+    type: "SSTI",
+    severity: "CRITICAL",
+    terms: ["server-side template injection", "server side template injection", "template injection", "ssti"],
+    vulnerable: "$view->setTemplateSource($userInput);",
+    secure: "$view->assign('userInput', $userInput);",
+  },
+  {
+    type: "RCE",
+    severity: "CRITICAL",
+    terms: ["remote code execution", "code execution", "command injection", " rce"],
+    vulnerable: "shell_exec('convert ' . $userInput . ' output.png');",
+    secure: "\\TYPO3\\CMS\\Core\\Utility\\CommandUtility::exec('convert ' . escapeshellarg($userInput) . ' output.png');",
+  },
 ];
+
+// Templates the distiller wrote itself. A stored example that is not one of
+// these was curated by a person and must survive a re-classification.
+const GENERATED_EXAMPLES = new Set(TAXONOMY.flatMap(({ vulnerable, secure }) => [vulnerable, secure]));
+
+const SEVERITY_RANK = { CRITICAL: 3, HIGH: 2, MEDIUM: 1, LOW: 0 };
 
 function decodeXml(value = "") {
   return value
@@ -99,25 +140,50 @@ export function distillAdvisory(item) {
   const title = plainText(String(item.title || "Untitled TYPO3 security advisory"));
   const description = plainText(String(item.summary || item.description || ""));
   const searchable = ` ${title} ${description}`.toLowerCase();
-  const match = TAXONOMY
+  const searchableTitle = ` ${title}`.toLowerCase();
+  // Core advisories in the feed often carry a generic teaser ("susceptible to
+  // broken access control") that contradicts the specific title. On a tie the
+  // title therefore wins, then the more severe class.
+  const matches = TAXONOMY
     .map((candidate) => ({
       candidate,
       score: candidate.terms.filter((term) => searchable.includes(term)).length,
+      titleScore: candidate.terms.filter((term) => searchableTitle.includes(term)).length,
     }))
-    .sort((left, right) => right.score - left.score)
-    .find(({ score }) => score > 0)?.candidate;
+    .filter(({ score }) => score > 0)
+    .sort((left, right) => right.score - left.score
+      || right.titleScore - left.titleScore
+      || SEVERITY_RANK[right.candidate.severity] - SEVERITY_RANK[left.candidate.severity]);
+  const primary = matches[0]?.candidate;
+
+  // One advisory may name several classes ("Privilege Escalation & SQL
+  // Injection", "Multiple vulnerabilities ... Broken Access Control and SSTI").
+  // A class named in the title is trusted; the teaser only counts when the
+  // title names none, because only then does it list the actual classes.
+  const titled = matches.filter(({ titleScore }) => titleScore > 0);
+  const classes = [primary, ...(titled.length > 0 ? titled : matches).map(({ candidate }) => candidate)]
+    .filter((candidate, index, all) => candidate && all.indexOf(candidate) === index);
+  const findings = classes.map((candidate) => ({
+    type: candidate.type,
+    severity: candidate.severity,
+    vulnerable_code: candidate.vulnerable,
+    secure_code: candidate.secure,
+  }));
+  const severity = findings.map((finding) => finding.severity)
+    .sort((left, right) => SEVERITY_RANK[right] - SEVERITY_RANK[left])[0];
 
   return {
     id: inferId({ ...item, title, summary: description }),
-    type: match?.type || "UNCLASSIFIED",
-    severity: match?.severity || "UNKNOWN",
+    type: primary?.type || "UNCLASSIFIED",
+    severity: severity || "UNKNOWN",
     title,
     description,
     link: String(item.link || ""),
     published_at: String(item.pubDate || item.published_at || ""),
-    confidence: match ? "EXPERIMENTAL" : "UNCLASSIFIED",
-    vulnerable_code: match?.vulnerable || "",
-    secure_code: match?.secure || "",
+    confidence: primary ? "EXPERIMENTAL" : "UNCLASSIFIED",
+    vulnerable_code: primary?.vulnerable || "",
+    secure_code: primary?.secure || "",
+    findings,
     source: "TYPO3_SECURITY_FEED",
   };
 }
@@ -126,8 +192,20 @@ function phpString(value) {
   return value.replaceAll("\\", "\\\\").replaceAll("'", "\\'");
 }
 
+function methodName(type) {
+  return `vulnerable${type.toLowerCase().replace(/(?:^|_)([a-z])/gu, (_, letter) => letter.toUpperCase())}`;
+}
+
 export function draftFixtureFor(advisory) {
   if (advisory.confidence !== "EXPERIMENTAL" || !advisory.vulnerable_code) return null;
+
+  const findings = advisory.findings?.length
+    ? advisory.findings
+    : [{ type: advisory.type, vulnerable_code: advisory.vulnerable_code }];
+  const methods = findings.map((finding) => `    public function ${methodName(finding.type)}(object $queryBuilder, object $querySettings, object $repository, object $model, object $authorizationService, object $view, string $userInput): void
+    {
+        ${finding.vulnerable_code}
+    }`).join("\n\n");
 
   const classSuffix = advisory.id.replace(/[^A-Za-z0-9]/gu, "_");
   const title = phpString(advisory.title).replaceAll("*/", "* /");
@@ -142,8 +220,9 @@ namespace Typo3SecuritySuite\\Tests\\Fixtures\\Learned;
  *
  * Source title: ${title}
  *
- * This is a generic one-liner derived from the advisory's vulnerability class,
- * not from its documented root cause, and no rule has been shown to detect it.
+ * Each method is a generic one-liner derived from one vulnerability class the
+ * advisory names, not from its documented root cause, and no rule has been
+ * shown to detect it.
  * It is therefore not evidence of anything. To turn it into a regression case,
  * follow docs/en/CONTINUOUS_LEARNING.md: write a realistic vulnerable example and
  * an equivalent secure counterpart under tests/fixtures/regression/<slug>/ with
@@ -151,10 +230,7 @@ namespace Typo3SecuritySuite\\Tests\\Fixtures\\Learned;
  */
 final class ${classSuffix}
 {
-    public function vulnerable(object $queryBuilder, object $querySettings, object $repository, object $model, object $authorizationService, string $userInput): void
-    {
-        ${advisory.vulnerable_code}
-    }
+${methods}
 }
 `;
 }
@@ -168,13 +244,17 @@ export function persistLearning(advisories, options) {
 
   for (const advisory of advisories) {
     const existingAdvisory = byId.get(advisory.id);
-    byId.set(advisory.id, {
-      ...existingAdvisory,
-      ...advisory,
-      vulnerable_code: existingAdvisory?.vulnerable_code || advisory.vulnerable_code,
-      secure_code: existingAdvisory?.secure_code || advisory.secure_code,
-    });
-    const fixture = draftFixtureFor(advisory);
+    // Keep an example a person curated, but replace one the distiller generated
+    // itself: otherwise an improved classification could never correct it.
+    const curated = (value) => (value && !GENERATED_EXAMPLES.has(value) ? value : "");
+    const vulnerable = curated(existingAdvisory?.vulnerable_code) || advisory.vulnerable_code;
+    const secure = curated(existingAdvisory?.secure_code) || advisory.secure_code;
+    const findings = advisory.findings.map((finding, index) => (index === 0
+      ? { ...finding, vulnerable_code: vulnerable, secure_code: secure }
+      : finding));
+    const merged = { ...existingAdvisory, ...advisory, vulnerable_code: vulnerable, secure_code: secure, findings };
+    byId.set(advisory.id, merged);
+    const fixture = draftFixtureFor(merged);
     if (!fixture) continue;
     const filename = `${advisory.id.replace(/[^A-Za-z0-9._-]/gu, "_")}.php`;
     createdDrafts.push(filename);

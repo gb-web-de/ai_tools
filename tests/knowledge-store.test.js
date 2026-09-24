@@ -76,3 +76,18 @@ test('invalid, oversized, corrupt and concurrent writes fail without losing data
   assert.equal(fs.readFileSync(path.join(dir, 'fixes_history.jsonl'), 'utf8'), '{broken');
   assert.ok(!fs.existsSync(path.join(dir, '.learning.lock')));
 });
+
+test('an advisory naming several classes is found under each of them', (t) => {
+  const dir = directory(t);
+  fs.writeFileSync(path.join(dir, 'advisories.json'), JSON.stringify([
+    {
+      id: 'TYPO3-CORE-SA-2026-017', title: 'Privilege Escalation & SQL Injection in Form Framework', type: 'BROKEN_ACCESS_CONTROL',
+      findings: [{ type: 'BROKEN_ACCESS_CONTROL' }, { type: 'SQL_INJECTION' }],
+    },
+    { id: 'TYPO3-EXT-SA-2026-017', title: 'Path Traversal in extension "Mask"', type: 'PATH_TRAVERSAL', findings: [{ type: 'PATH_TRAVERSAL' }] },
+  ]));
+  assert.deepEqual(queryKnowledge(dir, { type: 'SQL_INJECTION' }).advisories.map((item) => item.id), ['TYPO3-CORE-SA-2026-017']);
+  assert.deepEqual(queryKnowledge(dir, { type: 'BROKEN_ACCESS_CONTROL' }).advisories.map((item) => item.id), ['TYPO3-CORE-SA-2026-017']);
+  // German concept terms reach the new classes as well.
+  assert.deepEqual(queryKnowledge(dir, { query: 'Verzeichnistraversierung' }).advisories.map((item) => item.id), ['TYPO3-EXT-SA-2026-017']);
+});

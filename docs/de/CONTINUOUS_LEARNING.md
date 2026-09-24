@@ -199,6 +199,8 @@ Die Fixtures belegen das Verhalten der Regeln, nicht die Ausnutzbarkeit einer ko
 
 `npm run learn:advisories` legt generische Entwürfe unter `var/advisory-drafts/` ab. Dieses Verzeichnis ist nicht versioniert, und jeder Entwurf weist sich im Dateikopf als nicht committierbar aus. Ein Entwurf wird erst dadurch zum Nachweis, dass jemand daraus ein realistisches Paar mit `case.json` baut und der Regressionstest beide Richtungen bestätigt.
 
+Die Taxonomie kennt `SQL_INJECTION`, `XSS`, `BROKEN_ACCESS_CONTROL`, `DATA_LEAKAGE`, `DESERIALIZATION`, `SSRF`, `FILE_UPLOAD`, `OPEN_REDIRECT`, `PATH_TRAVERSAL`, `SSTI` und `RCE`. Nennt ein Advisory mehrere Klassen, stehen alle in `findings`, `type` bleibt die Hauptklasse und `severity` die schwerste. Eine Klasse im Titel gilt als verlässlich; der Kurztext des Feeds zählt nur, wenn der Titel keine Klasse nennt („Multiple vulnerabilities …“), denn bei Core-Advisories widerspricht er dem Titel oft. Der Entwurf enthält eine Methode je Klasse. Ein vom Distiller generiertes Beispiel wird bei einer verbesserten Einordnung ersetzt, ein von Hand gepflegtes bleibt erhalten.
+
 ## JavaScript- und TypoScript-Prüfung
 
 Die PHPStan-Regeln sehen nur PHP, der Fluid-Scanner nur `.html`. JavaScript im Browser und TypoScript blieben damit ungeprüft – zwei Flächen, auf denen TYPO3-Extensions regelmäßig angreifbar sind.

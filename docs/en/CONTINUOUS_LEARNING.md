@@ -199,6 +199,8 @@ The fixtures evidence the behaviour of the rules, not the exploitability of a sp
 
 `npm run learn:advisories` writes generic drafts to `var/advisory-drafts/`. That directory is not versioned, and every draft states in its header that it must not be committed. A draft only becomes evidence when someone turns it into a realistic pair with a `case.json` and the regression test confirms both directions.
 
+The taxonomy knows `SQL_INJECTION`, `XSS`, `BROKEN_ACCESS_CONTROL`, `DATA_LEAKAGE`, `DESERIALIZATION`, `SSRF`, `FILE_UPLOAD`, `OPEN_REDIRECT`, `PATH_TRAVERSAL`, `SSTI` and `RCE`. When an advisory names several classes, all of them are listed in `findings`; `type` stays the primary class and `severity` the most severe one. A class in the title is trusted; the feed's teaser only counts when the title names none ("Multiple vulnerabilities …"), because for core advisories it often contradicts the title. The draft contains one method per class. An example the distiller generated is replaced once the classification improves; a hand-curated one is kept.
+
 ## JavaScript and TypoScript checks
 
 The PHPStan rules only see PHP, and the Fluid scanner only `.html`. Browser JavaScript and TypoScript were therefore unchecked — two surfaces on which TYPO3 extensions are regularly vulnerable.

@@ -10,6 +10,10 @@ const CONCEPTS = {
   SSRF: ['ssrf', 'server side request forgery', 'interne urls', 'internal network'],
   DESERIALIZATION: ['deserialization', 'deserialisierung', 'unserialize', 'object injection', 'allowed classes'],
   FILE_UPLOAD: ['file upload', 'dateiupload', 'dateiendungen', 'file extensions', 'fal', 'filedeny', 'upload'],
+  OPEN_REDIRECT: ['open redirect', 'offene weiterleitung', 'unvalidated redirect', 'weiterleitung'],
+  PATH_TRAVERSAL: ['path traversal', 'directory traversal', 'verzeichnistraversierung', 'pfadmanipulation', 'local file inclusion'],
+  SSTI: ['ssti', 'template injection', 'server side template injection', 'setTemplateSource'],
+  RCE: ['rce', 'remote code execution', 'code execution', 'codeausführung', 'command injection', 'shell exec'],
 };
 
 export const digest = (text) => createHash('sha256').update(text).digest('hex');
@@ -88,8 +92,11 @@ export function buildKnowledgeGraph(directory) {
       const text = ['title', 'description', 'explanation', 'recommendation', 'domain', 'type', 'finding_type',
         'vulnerable_code', 'secure_code', 'vulnerable_example', 'secure_example', 'diff'].map((field) => data[field] || '').join(' ');
       const tags = concepts(text);
-      const declaredType = data.finding_type || data.type;
-      if (typeof declaredType === 'string' && declaredType !== 'UNCLASSIFIED' && !tags.includes(declaredType)) tags.push(declaredType);
+      // An advisory can name several classes; each one is a concept it addresses.
+      const declaredTypes = [data.finding_type || data.type, ...(Array.isArray(data.findings) ? data.findings.map((finding) => finding?.type) : [])];
+      for (const declaredType of declaredTypes) {
+        if (typeof declaredType === 'string' && declaredType !== 'UNCLASSIFIED' && !tags.includes(declaredType)) tags.push(declaredType);
+      }
       const record = { id, kind, data, text, concepts: tags.sort(), source_file: file };
       records.push(record);
       nodes.set(id, { record: 'node', id, kind, data, concepts: record.concepts, source_file: file });

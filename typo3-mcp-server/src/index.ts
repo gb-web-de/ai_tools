@@ -265,7 +265,7 @@ class Typo3SecurityMcpServer {
               limit: { type: "integer", minimum: 1, maximum: 50, description: "Maximale Trefferzahl (Standard: 10)." },
               type: {
                 type: "string",
-                description: "Filter nach Schwachstellentyp (z. B. 'SQL_INJECTION', 'XSS', 'BROKEN_ACCESS_CONTROL', 'DATA_LEAKAGE', 'SSRF')."
+                description: "Filter nach Schwachstellentyp (z. B. 'SQL_INJECTION', 'XSS', 'BROKEN_ACCESS_CONTROL', 'DATA_LEAKAGE', 'SSRF', 'FILE_UPLOAD', 'PATH_TRAVERSAL', 'SSTI', 'RCE', 'OPEN_REDIRECT'). Ein Advisory mit mehreren Klassen wird unter jeder davon gefunden."
               }
             }
           }
