@@ -28,7 +28,9 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          # The suite's own tooling (PHPStan 2, Symfony 8) is locked for PHP 8.4+;
+          # the TYPO3 code it analyses may still target PHP 8.2.
+          php-version: '8.4'
           extensions: mbstring, intl, pdo_sqlite, xml
           tools: composer
 
