@@ -59,7 +59,10 @@ class InsecureDeserializationRule implements Rule
 
         $hasAllowedClassesFalse = false;
         foreach ($optionsArg->items as $item) {
-            if ($item === null || $item->key === null) {
+            // No null check on $item: PHP-Parser 5, which ships with PHPStan 2,
+            // types Array_::$items as list<ArrayItem>. Only parser 4 could put
+            // null in there, for the holes in list($a, , $c).
+            if ($item->key === null) {
                 continue;
             }
             if ($item->key instanceof Node\Scalar\String_ && $item->key->value === 'allowed_classes') {

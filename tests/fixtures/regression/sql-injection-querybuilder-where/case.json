@@ -16,8 +16,10 @@
     "note": "The published advisory names the vulnerability class and the affected extension, not the concrete code location. This fixture reproduces the class in an idiomatic TYPO3 repository; it is not a reconstruction of the vendor's actual code."
   },
   "review": {
-    "status": "PENDING",
-    "reviewed_by": null,
-    "reviewed_at": null
+    "status": "APPROVED",
+    "reviewed_by": "Gordon Brüggemann",
+    "reviewed_at": "2026-09-24",
+    "content_digest": "3e35071fa48f89ea89c4e4d55550564c84f865a760fdeda8f3c05ca98d27ccb2",
+    "note": null
   }
 }

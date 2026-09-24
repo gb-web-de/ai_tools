@@ -1,0 +1,5 @@
+lib.searchTerm = TEXT
+lib.searchTerm {
+    data = GP:q
+    wrap = <p>|</p>
+}

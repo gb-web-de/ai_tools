@@ -22,8 +22,13 @@ jobs:
           extensions: mbstring, intl, pdo_sqlite, xml
           coverage: none
           tools: composer
-      - run: npm ci --prefix typo3-mcp-server --workspaces=false --ignore-scripts
-      - run: composer install --working-dir=typo3-security-suite --no-interaction --prefer-dist --no-plugins --no-scripts
+      # Root install: the MCP server imports the shared scanners in scripts/lib/,
+      # which need the root dependencies (acorn), not only the workspace ones.
+      - run: npm ci --ignore-scripts
+      # Plugins stay enabled, limited by config.allow-plugins: without
+      # a9f/fractor-extension-installer Fractor loads no TypoScript rules and
+      # silently repairs nothing.
+      - run: composer install --working-dir=typo3-security-suite --no-interaction --prefer-dist --no-scripts
       - run: npm test
       # Informational: shows which regression fixtures still lack a human
       # sign-off. Switch to `npm run fixtures:status -- --require-approved` once
