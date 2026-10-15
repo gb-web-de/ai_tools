@@ -1,0 +1,10 @@
+{
+  "mcp": {
+    "mode": "suggest",
+    "maxHints": 3
+  },
+  "shield": {
+    "mode": "block",
+    "allowPaths": []
+  }
+}

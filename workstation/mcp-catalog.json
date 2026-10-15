@@ -1,0 +1,232 @@
+{
+  "_doc": "Katalog für hooks/mcp-detect.mjs. keywords sind Regex-Fragmente (Kleinschreibung, Wortgrenzen werden ergänzt). auto=true heißt: lokal, ohne Zugangsdaten, darf bei mcp.mode=auto ohne Rückfrage eingetragen werden.",
+  "servers": {
+    "typo3-security": {
+      "description": "TYPO3-Sicherheitsaudit, Fluid-XSS-Fix, PHPStan-Regeln, Advisory-Wissen (ai_tools)",
+      "keywords": [
+        "typo3",
+        "extbase",
+        "fluid",
+        "typoscript",
+        "tsconfig",
+        "xss",
+        "sql.?injection",
+        "phpstan",
+        "rector",
+        "fractor",
+        "sicherheitsl[uü]cke",
+        "advisor(y|ies)",
+        "ext_localconf",
+        "settings\\.php"
+      ],
+      "add": [
+        "node",
+        "{AI_TOOLS}/typo3-mcp-server/build/index.js"
+      ],
+      "requires": "{AI_TOOLS}/typo3-mcp-server/build/index.js",
+      "local": true,
+      "auto": true
+    },
+    "chrome-devtools": {
+      "description": "Echter Chrome: Konsole, Netzwerk, Performance, Lighthouse, Accessibility-Audit",
+      "keywords": [
+        "lighthouse",
+        "core web vitals",
+        "lcp",
+        "cls",
+        "ladezeit",
+        "konsole",
+        "console.?error",
+        "netzwerk.?request",
+        "accessibility",
+        "barrierefrei\\w*",
+        "a11y",
+        "wcag",
+        "kontrast",
+        "screenreader",
+        "responsive",
+        "darstellung",
+        "ux\\b",
+        "css",
+        "performance"
+      ],
+      "add": [
+        "npx",
+        "-y",
+        "chrome-devtools-mcp@latest"
+      ],
+      "plugin": "chrome-devtools-mcp@claude-plugins-official",
+      "local": true,
+      "auto": true
+    },
+    "playwright": {
+      "description": "Browser steuern und E2E-Tests (Klicken, Formulare, Screenshots, Accessibility-Snapshot)",
+      "keywords": [
+        "playwright",
+        "e2e",
+        "end.?to.?end",
+        "klick\\w*",
+        "formular",
+        "screenshot",
+        "browser.?test",
+        "ui.?test",
+        "barrierefrei\\w*",
+        "accessibility",
+        "tastatur.?navigation"
+      ],
+      "add": [
+        "npx",
+        "-y",
+        "@playwright/mcp@latest"
+      ],
+      "local": true,
+      "auto": true
+    },
+    "sequential-thinking": {
+      "description": "Strukturiertes Zerlegen schwieriger Probleme in Denkschritte",
+      "keywords": [
+        "architektur",
+        "schritt f[uü]r schritt",
+        "abw[aä]gen",
+        "design.?entscheidung",
+        "komplex\\w*",
+        "zerleg\\w*"
+      ],
+      "add": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "local": true,
+      "auto": true
+    },
+    "memory": {
+      "description": "Lokaler Wissensgraph als Langzeitgedächtnis (Datei auf diesem Rechner)",
+      "keywords": [
+        "merk dir",
+        "erinner\\w*",
+        "ged[aä]chtnis",
+        "wissensgraph",
+        "remember"
+      ],
+      "add": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
+      "local": true,
+      "auto": true
+    },
+    "context7": {
+      "description": "Aktuelle Library-Doku (sendet nur Bibliotheksname und Suchbegriff an context7.com)",
+      "keywords": [
+        "doku",
+        "dokumentation",
+        "docs",
+        "api.?referenz",
+        "library",
+        "bibliothek",
+        "framework",
+        "version \\d+",
+        "symfony",
+        "laravel",
+        "react",
+        "vue",
+        "tailwind",
+        "next\\.?js",
+        "vite"
+      ],
+      "add": [
+        "npx",
+        "-y",
+        "@upstash/context7-mcp"
+      ],
+      "local": false,
+      "auto": false
+    },
+    "sentry": {
+      "description": "Sentry-Fehler und Traces lesen (Anmeldung per OAuth im Browser)",
+      "keywords": [
+        "sentry",
+        "stack.?trace",
+        "fehler in (prod|produktion|live)",
+        "exception",
+        "crash"
+      ],
+      "add": [
+        "--transport",
+        "http",
+        "sentry",
+        "https://mcp.sentry.dev/mcp"
+      ],
+      "addRaw": true,
+      "local": false,
+      "auto": false
+    },
+    "phpstorm": {
+      "description": "PhpStorm selbst als MCP-Server (Inspections, Run-Configs, Dateien im IDE-Index)",
+      "keywords": [
+        "phpstorm",
+        "jetbrains",
+        "inspection\\w*",
+        "run.?config\\w*"
+      ],
+      "manual": "PhpStorm: Einstellungen > Tools > MCP Server > Enable, dann bei 'Claude Code' auf Auto-Configure klicken.",
+      "local": true,
+      "auto": false
+    }
+  },
+  "extras": {
+    "context-mode": {
+      "description": "Hält große Tool-Ausgaben aus dem Kontext (lokal, SQLite, keine Telemetrie)",
+      "keywords": [
+        "logs?",
+        "logdatei\\w*",
+        "gro[sß]e ausgabe",
+        "kontext (ist )?voll",
+        "context window",
+        "tokens? sparen"
+      ],
+      "marketplace": "mksglu/context-mode",
+      "plugin": "context-mode@context-mode"
+    },
+    "ponytail": {
+      "description": "Skill: minimaler Code, erst Vorhandenes nutzen, riskante Logik mit Test",
+      "keywords": [
+        "minimal",
+        "weniger code",
+        "einfach(er)?",
+        "refactor\\w*",
+        "aufr[aä]umen"
+      ],
+      "marketplace": "DietrichGebert/ponytail",
+      "plugin": "ponytail@ponytail"
+    },
+    "agent-skills": {
+      "description": "Skills für /spec /plan /build /test /review /ship (Addy Osmani)",
+      "keywords": [
+        "spec",
+        "prd",
+        "anforderung\\w*",
+        "review",
+        "release",
+        "ship",
+        "testplan"
+      ],
+      "marketplace": "addyosmani/agent-skills",
+      "plugin": "agent-skills@addy-agent-skills"
+    },
+    "unlazy": {
+      "description": "Skill: Abnahmeliste zuerst, Ergebnis gegen ausführbare Prüfungen belegen",
+      "keywords": [
+        "gr[uü]ndlich",
+        "vollst[aä]ndig",
+        "migration\\w*",
+        "verifizier\\w*",
+        "nachweis"
+      ],
+      "skillRepo": "https://github.com/Leonxlnx/unlazy.git",
+      "skill": "unlazy"
+    }
+  }
+}
