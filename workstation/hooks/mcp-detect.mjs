@@ -4,8 +4,10 @@
 // oder trägt lokale, schlüssellose Server selbst ein (mcp.mode=auto).
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
 import { WORKSTATION, HOME, STATE_DIR, readStdinJson, readJson, loadConfig, expand, emit } from '../lib/common.mjs';
+import { configured, addServer, addCommand } from '../lib/mcp.mjs';
+
+const agent = process.argv.includes('--agent') ? process.argv[process.argv.indexOf('--agent') + 1] : 'claude';
 
 const input = readStdinJson();
 const prompt = String(input.prompt || '');
@@ -24,21 +26,6 @@ function score(text, keywords) {
   return hits;
 }
 
-function configuredServers() {
-  const names = new Set();
-  const add = (obj) => Object.keys(obj?.mcpServers || {}).forEach((n) => names.add(n));
-  const claudeJson = readJson(path.join(HOME, '.claude.json'), {});
-  add(claudeJson);
-  for (const [dir, proj] of Object.entries(claudeJson.projects || {})) {
-    if (cwd === dir || cwd.startsWith(dir + path.sep)) add(proj);
-  }
-  for (let dir = cwd; ; dir = path.dirname(dir)) {
-    add(readJson(path.join(dir, '.mcp.json'), {}));
-    if (dir === path.dirname(dir)) break;
-  }
-  return names;
-}
-
 function enabledPlugins() {
   const settings = readJson(path.join(HOME, '.claude', 'settings.json'), {});
   return new Set(Object.entries(settings.enabledPlugins || {}).filter(([, on]) => on).map(([id]) => id));
@@ -55,20 +42,7 @@ function stateFile() {
   return path.join(STATE_DIR, `mcp-hints-${id}.json`);
 }
 
-function addServer(name, entry) {
-  const args = entry.addRaw
-    ? ['mcp', 'add', '-s', 'user', ...entry.add.map(expand)]
-    : ['mcp', 'add', '-s', 'user', name, '--', ...entry.add.map(expand)];
-  const res = spawnSync('claude', args, { encoding: 'utf8', timeout: 30_000 });
-  return res.status === 0;
-}
-
-function addCommand(name, entry) {
-  const parts = entry.addRaw ? entry.add.map(expand) : [name, '--', ...entry.add.map(expand)];
-  return `claude mcp add -s user ${parts.join(' ')}`;
-}
-
-const servers = configuredServers();
+const servers = configured(agent, cwd);
 const plugins = enabledPlugins();
 const file = stateFile();
 const hinted = new Set(readJson(file, []));
@@ -90,7 +64,7 @@ const added = [];
 for (const m of matches.slice(0, config.mcp.maxHints)) {
   const { name, entry, kind } = m;
   const present = kind === 'mcp'
-    ? servers.has(name) || (entry.plugin && plugins.has(entry.plugin))
+    ? servers.has(name) || (agent === 'claude' && entry.plugin && plugins.has(entry.plugin))
     : (entry.plugin && plugins.has(entry.plugin)) || (entry.skill && fs.existsSync(path.join(HOME, '.claude', 'skills', entry.skill)));
   if (present) {
     ready.push(`${name} (${entry.description})`);
@@ -99,14 +73,14 @@ for (const m of matches.slice(0, config.mcp.maxHints)) {
   if (hinted.has(name)) continue;
   hinted.add(name);
   if (kind === 'mcp' && entry.requires && !fs.existsSync(expand(entry.requires))) continue;
-  if (kind === 'mcp' && config.mcp.mode === 'auto' && entry.auto && entry.local && entry.add && addServer(name, entry)) {
+  if (kind === 'mcp' && config.mcp.mode === 'auto' && entry.auto && entry.local && entry.add && addServer(agent, name, entry)) {
     added.push(name);
     continue;
   }
   let how;
-  if (kind === 'extra') how = `./workstation/install.sh --extra ${name} (in ai_tools)`;
+  if (kind === 'extra') how = `~/.claude/ai_tools/install.sh --extra ${name}`;
   else if (entry.manual) how = entry.manual;
-  else how = addCommand(name, entry);
+  else how = addCommand(agent, name);
   missing.push(`${name}: ${entry.description}${entry.local ? '' : ' [verlässt den Rechner]'}. Einrichten: \`${how}\``);
 }
 fs.writeFileSync(file, JSON.stringify([...hinted]));
@@ -115,7 +89,7 @@ if (!ready.length && !missing.length && !added.length) process.exit(0);
 
 const lines = ['[ai_tools MCP-Erkennung]'];
 if (ready.length) lines.push(`Passend und eingerichtet, bevorzugt nutzen: ${ready.join('; ')}.`);
-if (added.length) lines.push(`Gerade eingetragen (user scope, ab der nächsten Sitzung aktiv): ${added.join(', ')}. Sag das dem Nutzer in einem Satz.`);
+if (added.length) lines.push(`Gerade eingetragen (ab der nächsten Sitzung aktiv): ${added.join(', ')}. Sag das dem Nutzer in einem Satz.`);
 if (missing.length) {
   lines.push('Passend, aber nicht eingerichtet. Schlage es dem Nutzer in einem Satz vor und richte es nur nach seinem Ja ein:');
   lines.push(...missing.map((l) => `- ${l}`));

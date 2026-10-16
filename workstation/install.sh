@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # Richtet die ai_tools-Arbeitsumgebung für Claude Code ein (Linux und macOS).
-# Gilt für Terminal, PhpStorm (Claude-Code-Plugin) und jede andere Oberfläche, die die claude-CLI startet.
+# Gilt für Claude Code, Codex (CLI, PhpStorm, ChatGPT-App) und GitHub Copilot CLI, sofern auf dem Rechner vorhanden.
 #
 #   ./workstation/install.sh                  Hooks (MCP-Erkennung + Datenschutzschild) einrichten
 #   ./workstation/install.sh --extras         zusätzlich alle Extras (Skills/Plugins) installieren
 #   ./workstation/install.sh --extra ponytail nur ein Extra installieren
-#   ./workstation/install.sh --mcp playwright einen MCP-Server aus dem Katalog eintragen
+#   ./workstation/install.sh --mcp playwright einen MCP-Server bei allen Agenten eintragen
+#   ./workstation/install.sh --mcp playwright --agent codex  nur bei einem (claude|codex|copilot)
 #   ./workstation/install.sh --uninstall      Hooks wieder austragen
 set -euo pipefail
 
@@ -49,17 +50,31 @@ install_extra() {
   fi
 }
 
+# Agenten, die auf diesem Rechner benutzt werden (Codex auch über PhpStorm/ChatGPT: ~/.codex).
+agents() {
+  echo claude
+  { command -v codex >/dev/null 2>&1 || [[ -d "$HOME/.codex" ]]; } && echo codex
+  { command -v copilot >/dev/null 2>&1 || [[ -d "${COPILOT_HOME:-$HOME/.copilot}" ]]; } && echo copilot
+  return 0
+}
+
 install_mcp() {
-  local name="$1" entry
+  local name="$1" only="${2:-}" entry agent
   entry="$(catalog servers "$name")" || die "MCP-Server '$name' steht nicht im Katalog."
-  node --input-type=module -e "
-    import { spawnSync } from 'node:child_process';
-    import { expand } from '$HERE/lib/common.mjs';
-    const e = $entry;
-    if (e.manual) { console.log(e.manual); process.exit(0); }
-    const args = e.addRaw ? e.add.map(expand) : ['$name', '--', ...e.add.map(expand)];
-    const r = spawnSync('claude', ['mcp', 'add', '-s', 'user', ...args], { stdio: 'inherit' });
-    process.exit(r.status ?? 1);"
+  for agent in ${only:-$(agents)}; do
+    node --input-type=module -e "
+      import { addServer } from '$HERE/lib/mcp.mjs';
+      const e = $entry;
+      if (e.manual) { console.log(e.manual); process.exit(0); }
+      process.exit(addServer('$agent', '$name', e) ? 0 : 1);" && say "MCP $name → $agent" || say "MCP $name → $agent fehlgeschlagen"
+  done
+}
+
+link_rules() {
+  local dest="$1"
+  mkdir -p "$(dirname "$dest")"
+  if [[ ! -e "$dest" ]]; then ln -s "$HERE/AGENTS.md" "$dest"; say "Regeln verknüpft: $dest"
+  elif [[ "$(readlink "$dest")" != "$HERE/AGENTS.md" ]]; then say "$dest gibt es schon, Regeln aus $HERE/AGENTS.md bitte selbst übernehmen."; fi
 }
 
 need node nodejs
@@ -68,11 +83,14 @@ command -v claude >/dev/null 2>&1 || die "claude fehlt. Installieren: curl -fsSL
 
 case "${1:-}" in
   --uninstall)
-    node "$HERE/lib/merge-settings.mjs" "$HOOKS" --remove
+    for agent in claude codex copilot; do node "$HERE/lib/merge-settings.mjs" "$HOOKS" "$agent" --remove; done
+    for f in "$HOME/.codex/AGENTS.md" "${COPILOT_HOME:-$HOME/.copilot}/copilot-instructions.md"; do
+      [[ "$(readlink "$f" 2>/dev/null)" == "$HERE/AGENTS.md" ]] && rm "$f"
+    done
     [[ -L "$LINK" ]] && rm "$LINK"
     exit 0 ;;
   --extra) install_extra "${2:?Name fehlt}"; exit 0 ;;
-  --mcp) install_mcp "${2:?Name fehlt}"; exit 0 ;;
+  --mcp) install_mcp "${2:?Name fehlt}" "$([[ "${3:-}" == --agent ]] && echo "${4:-}")"; exit 0 ;;
 esac
 
 mkdir -p "$HOME/.claude"
@@ -80,7 +98,9 @@ if [[ -e "$LINK" && ! -L "$LINK" ]]; then die "$LINK existiert und ist kein Link
 ln -sfn "$HERE" "$LINK"
 say "Verknüpft: $LINK → $HERE"
 
-node "$HERE/lib/merge-settings.mjs" "$HOOKS"
+for agent in $(agents); do node "$HERE/lib/merge-settings.mjs" "$HOOKS" "$agent"; done
+agents | grep -qx codex && link_rules "$HOME/.codex/AGENTS.md"
+agents | grep -qx copilot && link_rules "${COPILOT_HOME:-$HOME/.copilot}/copilot-instructions.md"
 
 mkdir -p "$CONFIG_DIR"
 if [[ ! -f "$CONFIG_DIR/workstation.json" ]]; then
@@ -99,4 +119,5 @@ if [[ "${1:-}" == "--extras" ]]; then
   done
 fi
 
-say "Fertig. Neue Claude-Code-Sitzungen (Terminal und PhpStorm) laden die Hooks; laufende Sitzungen neu starten."
+say "Fertig für: $(agents | tr '\n' ' ')"
+say "Neue Sitzungen laden die Hooks. Codex fragt beim ersten Start einmal, ob es den Hooks vertraut."

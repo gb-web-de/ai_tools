@@ -113,16 +113,19 @@ if (event === 'PreToolUse') {
     hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: shield.mode === 'warn' ? 'ask' : decision, permissionDecisionReason: reason },
   });
 
-  if (['Read', 'Grep', 'Glob', 'NotebookRead'].includes(tool)) {
+  // Claude-Namen, dazu Copilot CLI (view/edit/create/bash) und Codex (apply_patch).
+  const t = tool.toLowerCase();
+  if (['read', 'grep', 'glob', 'notebookread', 'view'].includes(t)) {
     const target = ti.file_path || ti.path || ti.notebook_path || '';
     const pattern = ti.pattern || ti.glob || '';
-    if (isSensitivePath(target, allow) || (tool === 'Glob' && isSensitivePath(pattern, allow))) {
+    if (isSensitivePath(target, allow) || (t === 'glob' && isSensitivePath(pattern, allow))) {
       decide('deny', `Datenschutzschild: ${target || pattern} enthält Zugangsdaten. Inhalt nicht in den Kontext laden; solche Werte trägt der Nutzer selbst ein. Nur prüfen, ob ein Schlüssel gesetzt ist, z. B. mit grep -c '^NAME=' ohne Ausgabe des Werts.`);
     }
-  } else if (['Edit', 'Write', 'MultiEdit', 'NotebookEdit'].includes(tool)) {
-    const target = ti.file_path || ti.notebook_path || '';
-    if (isSensitivePath(target, allow)) decide('ask', `Datenschutzschild: ${target} ist eine Geheimnis-Datei. Schreiben nur mit deiner Freigabe, und keine Werte für Passwörter oder Tokens.`);
-  } else if (tool === 'Bash') {
+  } else if (['edit', 'write', 'multiedit', 'notebookedit', 'create', 'apply_patch'].includes(t)) {
+    const patched = [...String(t === 'apply_patch' ? ti.command || '' : '').matchAll(/^\*\*\* (?:Add|Update|Delete) File: (.+)$/gm)].map((m) => m[1].trim());
+    const target = [ti.file_path || ti.notebook_path || ti.path || '', ...patched].find((p) => isSensitivePath(p, allow));
+    if (target) decide('ask', `Datenschutzschild: ${target} ist eine Geheimnis-Datei. Schreiben nur mit deiner Freigabe, und keine Werte für Passwörter oder Tokens.`);
+  } else if (['bash', 'shell', 'powershell'].includes(t)) {
     const hit = sensitiveInCommand(ti.command || '', allow);
     if (hit) decide('ask', `Datenschutzschild: Der Befehl berührt ${hit}. Ausführen nur mit deiner Freigabe; der Inhalt landet sonst im Kontext.`);
   }
