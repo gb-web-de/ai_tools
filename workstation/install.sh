@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Richtet die ai_tools-Arbeitsumgebung für Claude Code ein (Linux und macOS).
-# Gilt für Claude Code, Codex (CLI, PhpStorm, ChatGPT-App) und GitHub Copilot CLI, sofern auf dem Rechner vorhanden.
+# Gilt für Claude Code, Codex (CLI, PhpStorm, ChatGPT-App) und GitHub Copilot CLI und Google Antigravity (agy), sofern auf dem Rechner vorhanden.
 #
 #   ./workstation/install.sh                  Hooks (MCP-Erkennung + Datenschutzschild) einrichten
 #   ./workstation/install.sh --extras         zusätzlich alle Extras (Skills/Plugins) installieren
 #   ./workstation/install.sh --extra ponytail nur ein Extra installieren
 #   ./workstation/install.sh --mcp playwright einen MCP-Server bei allen Agenten eintragen
-#   ./workstation/install.sh --mcp playwright --agent codex  nur bei einem (claude|codex|copilot)
+#   ./workstation/install.sh --mcp playwright --agent codex  nur bei einem (claude|codex|copilot|antigravity)
 #   ./workstation/install.sh --uninstall      Hooks wieder austragen
 set -euo pipefail
 
@@ -55,6 +55,7 @@ agents() {
   echo claude
   { command -v codex >/dev/null 2>&1 || [[ -d "$HOME/.codex" ]]; } && echo codex
   { command -v copilot >/dev/null 2>&1 || [[ -d "${COPILOT_HOME:-$HOME/.copilot}" ]]; } && echo copilot
+  { command -v agy >/dev/null 2>&1 || [[ -d "$HOME/.gemini/config" ]]; } && echo antigravity
   return 0
 }
 
@@ -87,6 +88,7 @@ case "${1:-}" in
     for f in "$HOME/.codex/AGENTS.md" "${COPILOT_HOME:-$HOME/.copilot}/copilot-instructions.md"; do
       [[ "$(readlink "$f" 2>/dev/null)" == "$HERE/AGENTS.md" ]] && rm "$f"
     done
+    [[ -L "$HOME/.gemini/config/plugins/ai-tools" ]] && rm "$HOME/.gemini/config/plugins/ai-tools"
     [[ -L "$LINK" ]] && rm "$LINK"
     exit 0 ;;
   --extra) install_extra "${2:?Name fehlt}"; exit 0 ;;
@@ -98,7 +100,15 @@ if [[ -e "$LINK" && ! -L "$LINK" ]]; then die "$LINK existiert und ist kein Link
 ln -sfn "$HERE" "$LINK"
 say "Verknüpft: $LINK → $HERE"
 
-for agent in $(agents); do node "$HERE/lib/merge-settings.mjs" "$HOOKS" "$agent"; done
+for agent in $(agents); do
+  [[ "$agent" == antigravity ]] || node "$HERE/lib/merge-settings.mjs" "$HOOKS" "$agent"
+done
+# Antigravity lädt Hooks und Regeln als Plugin aus ~/.gemini/config/plugins.
+if agents | grep -qx antigravity; then
+  mkdir -p "$HOME/.gemini/config/plugins"
+  ln -sfn "$HERE/antigravity-plugin" "$HOME/.gemini/config/plugins/ai-tools"
+  say "Antigravity-Plugin verknüpft: ~/.gemini/config/plugins/ai-tools"
+fi
 agents | grep -qx codex && link_rules "$HOME/.codex/AGENTS.md"
 agents | grep -qx copilot && link_rules "${COPILOT_HOME:-$HOME/.copilot}/copilot-instructions.md"
 

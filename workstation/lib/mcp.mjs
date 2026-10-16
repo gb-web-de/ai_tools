@@ -4,8 +4,9 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { HOME, readJson, expand } from './common.mjs';
 
-export const AGENTS = ['claude', 'codex', 'copilot'];
+export const AGENTS = ['claude', 'codex', 'copilot', 'antigravity'];
 const CODEX_TOML = path.join(HOME, '.codex', 'config.toml');
+const AGY_JSON = path.join(HOME, '.gemini', 'config', 'mcp_config.json');
 const COPILOT_JSON = path.join(process.env.COPILOT_HOME || path.join(HOME, '.copilot'), 'mcp-config.json');
 
 const tomlString = (s) => JSON.stringify(s); // JSON-Strings sind gültige TOML-Basic-Strings
@@ -16,8 +17,8 @@ export function configured(agent, cwd) {
   if (agent === 'codex') {
     const toml = fs.existsSync(CODEX_TOML) ? fs.readFileSync(CODEX_TOML, 'utf8') : '';
     for (const m of toml.matchAll(/^\s*\[mcp_servers\.("?)([\w-]+)\1\]/gm)) names.add(m[2]);
-  } else if (agent === 'copilot') {
-    add(readJson(COPILOT_JSON, {}));
+  } else if (agent === 'copilot' || agent === 'antigravity') {
+    add(readJson(agent === 'copilot' ? COPILOT_JSON : AGY_JSON, {}));
   } else {
     const claudeJson = readJson(path.join(HOME, '.claude.json'), {});
     add(claudeJson);
@@ -52,14 +53,19 @@ export function addServer(agent, name, entry) {
     fs.appendFileSync(CODEX_TOML, `\n[mcp_servers.${name}]\n${body}\n`);
     return true;
   }
-  if (agent === 'copilot') {
-    const conf = readJson(COPILOT_JSON, {});
+  if (agent === 'copilot' || agent === 'antigravity') {
+    const file = agent === 'copilot' ? COPILOT_JSON : AGY_JSON;
+    const conf = readJson(file, {});
     conf.mcpServers ||= {};
-    conf.mcpServers[name] = entry.url
-      ? { type: 'http', url: entry.url, tools: ['*'] }
-      : { type: 'local', command: cmd[0], args: cmd.slice(1), env: {}, tools: ['*'] };
-    fs.mkdirSync(path.dirname(COPILOT_JSON), { recursive: true });
-    fs.writeFileSync(COPILOT_JSON, JSON.stringify(conf, null, 2) + '\n');
+    if (agent === 'copilot') {
+      conf.mcpServers[name] = entry.url
+        ? { type: 'http', url: entry.url, tools: ['*'] }
+        : { type: 'local', command: cmd[0], args: cmd.slice(1), env: {}, tools: ['*'] };
+    } else {
+      conf.mcpServers[name] = entry.url ? { serverUrl: entry.url } : { command: cmd[0], args: cmd.slice(1) };
+    }
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(conf, null, 2) + '\n');
     return true;
   }
   return false;

@@ -1,4 +1,4 @@
-# Arbeitsplatz-Setup für Claude Code, Codex und GitHub Copilot
+# Arbeitsplatz-Setup für Claude Code, Codex, GitHub Copilot und Google Antigravity
 
 Ein Ort für Hooks, MCP-Katalog und Skills, der auf jedem Rechner gleich eingerichtet wird. Alles läuft lokal; es werden keine API-Keys gebraucht und keine Abo-Tokens über Dritte geleitet.
 
@@ -21,7 +21,7 @@ Linux und macOS gleich. Auf dem Mac braucht es `node` und `git` (`brew install n
 
 Einzelne Teile: `install.sh --mcp playwright` (bei allen Agenten, oder `--agent codex`), `install.sh --extra ponytail`, Rückbau mit `install.sh --uninstall`.
 
-## Codex, ChatGPT und GitHub Copilot
+## Codex, ChatGPT, GitHub Copilot und Google Antigravity
 
 `install.sh` richtet jeden Agenten ein, den es auf dem Rechner findet:
 
@@ -30,6 +30,7 @@ Einzelne Teile: `install.sh --mcp playwright` (bei allen Agenten, oder `--agent 
 | Claude Code (Terminal, PhpStorm) | Erkennung + Schild für Prompt und Werkzeuge | `claude mcp add -s user` | – |
 | Codex (CLI, PhpStorm, ChatGPT-App) | `~/.codex/hooks.json`, gleiches Format wie Claude; Codex fragt einmal, ob es den Hooks vertraut | `~/.codex/config.toml` | `~/.codex/AGENTS.md` |
 | GitHub Copilot CLI | `~/.copilot/hooks/ai_tools.json`, nur der Werkzeug-Schild (Copilot verwirft Prompt-Hook-Ausgaben) | `~/.copilot/mcp-config.json` | `~/.copilot/copilot-instructions.md` |
+| Google Antigravity (`agy`, App, IDE) | Plugin `~/.gemini/config/plugins/ai-tools` mit dem Werkzeug-Schild (Antigravity hat keinen Prompt-Hook) | `~/.gemini/config/mcp_config.json` | `rules/AGENTS.md` im Plugin |
 
 ChatGPT im Browser oder in der Handy-App erreicht keine lokalen Hooks oder MCP-Server, ohne einen Server ins Internet freizugeben. Lokal läuft ChatGPT deshalb über Codex mit demselben Konto. Copilot in PhpStorm oder VS Code verwaltet MCP in den IDE-Einstellungen; die Repo-Regeln dafür erzeugt `npm run sync-ai` (`.github/copilot-instructions.md`, `.vscode/mcp.json`).
 

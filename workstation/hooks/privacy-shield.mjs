@@ -89,7 +89,9 @@ const input = readStdinJson();
 const { shield } = loadConfig();
 if (shield.mode === 'off') process.exit(0);
 const allow = shield.allowPaths || [];
-const event = input.hook_event_name;
+// Antigravity (agy) schickt { toolCall: { name, args } } ohne Eventnamen und erwartet { decision, reason }.
+const agy = Boolean(input.toolCall);
+const event = agy ? 'PreToolUse' : input.hook_event_name;
 
 if (event === 'UserPromptSubmit') {
   const prompt = String(input.prompt || '');
@@ -107,27 +109,33 @@ if (event === 'UserPromptSubmit') {
 }
 
 if (event === 'PreToolUse') {
-  const tool = input.tool_name || '';
-  const ti = input.tool_input || {};
-  const decide = (decision, reason) => emit({
-    hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: shield.mode === 'warn' ? 'ask' : decision, permissionDecisionReason: reason },
-  });
+  const tool = agy ? input.toolCall.name || '' : input.tool_name || '';
+  const ti = (agy ? input.toolCall.args : input.tool_input) || {};
+  // agy-Argumentnamen (z. B. AbsolutePath, TargetFile) sind nicht dokumentiert, daher alle Text-Argumente prüfen.
+  const anyArg = agy ? Object.values(ti).filter((v) => typeof v === 'string').find((v) => isSensitivePath(v, allow)) : '';
+  let decided = false;
+  const decide = (decision, reason) => {
+    decided = true;
+    const d = shield.mode === 'warn' ? 'ask' : decision;
+    emit(agy ? { decision: d, reason } : { hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: d, permissionDecisionReason: reason } });
+  };
 
-  // Claude-Namen, dazu Copilot CLI (view/edit/create/bash) und Codex (apply_patch).
+  // Claude-Namen, dazu Copilot CLI (view/edit/create/bash), Codex (apply_patch) und Antigravity.
   const t = tool.toLowerCase();
-  if (['read', 'grep', 'glob', 'notebookread', 'view'].includes(t)) {
-    const target = ti.file_path || ti.path || ti.notebook_path || '';
+  if (['read', 'grep', 'glob', 'notebookread', 'view', 'view_file', 'grep_search', 'find_by_name', 'list_dir'].includes(t)) {
+    const target = ti.file_path || ti.path || ti.notebook_path || anyArg || '';
     const pattern = ti.pattern || ti.glob || '';
     if (isSensitivePath(target, allow) || (t === 'glob' && isSensitivePath(pattern, allow))) {
       decide('deny', `Datenschutzschild: ${target || pattern} enthält Zugangsdaten. Inhalt nicht in den Kontext laden; solche Werte trägt der Nutzer selbst ein. Nur prüfen, ob ein Schlüssel gesetzt ist, z. B. mit grep -c '^NAME=' ohne Ausgabe des Werts.`);
     }
-  } else if (['edit', 'write', 'multiedit', 'notebookedit', 'create', 'apply_patch'].includes(t)) {
+  } else if (['edit', 'write', 'multiedit', 'notebookedit', 'create', 'apply_patch', 'write_to_file', 'replace_file_content', 'multi_replace_file_content'].includes(t)) {
     const patched = [...String(t === 'apply_patch' ? ti.command || '' : '').matchAll(/^\*\*\* (?:Add|Update|Delete) File: (.+)$/gm)].map((m) => m[1].trim());
-    const target = [ti.file_path || ti.notebook_path || ti.path || '', ...patched].find((p) => isSensitivePath(p, allow));
+    const target = [ti.file_path || ti.notebook_path || ti.path || anyArg || '', ...patched].find((p) => isSensitivePath(p, allow));
     if (target) decide('ask', `Datenschutzschild: ${target} ist eine Geheimnis-Datei. Schreiben nur mit deiner Freigabe, und keine Werte für Passwörter oder Tokens.`);
-  } else if (['bash', 'shell', 'powershell'].includes(t)) {
-    const hit = sensitiveInCommand(ti.command || '', allow);
+  } else if (['bash', 'shell', 'powershell', 'run_command'].includes(t)) {
+    const hit = sensitiveInCommand(ti.command || ti.CommandLine || '', allow);
     if (hit) decide('ask', `Datenschutzschild: Der Befehl berührt ${hit}. Ausführen nur mit deiner Freigabe; der Inhalt landet sonst im Kontext.`);
   }
+  if (agy && !decided) emit({});
   process.exit(0);
 }
