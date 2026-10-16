@@ -4,6 +4,7 @@
 | --- | --- | --- |
 | Architecture, continuous learning, threat model & roadmap | [SELF_LEARNING_ARCHITECTURE.md](en/SELF_LEARNING_ARCHITECTURE.md) | [SELF_LEARNING_ARCHITECTURE.md](de/SELF_LEARNING_ARCHITECTURE.md) |
 | Operation, commands and limits of the learning features | [CONTINUOUS_LEARNING.md](en/CONTINUOUS_LEARNING.md) | [CONTINUOUS_LEARNING.md](de/CONTINUOUS_LEARNING.md) |
+| Workstation setup for AI assistants (beginner's guide) | [WORKSTATION.md](en/WORKSTATION.md) | [WORKSTATION.md](de/WORKSTATION.md) |
 
 Both language versions carry the same sections and are kept in sync; `npm run test:docs` fails if their heading structures diverge.
 
