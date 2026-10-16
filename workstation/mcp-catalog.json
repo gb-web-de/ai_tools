@@ -153,15 +153,9 @@
         "exception",
         "crash"
       ],
-      "add": [
-        "--transport",
-        "http",
-        "sentry",
-        "https://mcp.sentry.dev/mcp"
-      ],
-      "addRaw": true,
       "local": false,
-      "auto": false
+      "auto": false,
+      "url": "https://mcp.sentry.dev/mcp"
     },
     "phpstorm": {
       "description": "PhpStorm selbst als MCP-Server (Inspections, Run-Configs, Dateien im IDE-Index)",

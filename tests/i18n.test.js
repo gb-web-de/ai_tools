@@ -57,7 +57,7 @@ test('the documentation exists in both languages with the same structure', () =>
     .filter((line) => /^#{1,6} /u.test(line))
     .map((line) => line.match(/^#+/u)[0].length);
 
-  for (const document of ['CONTINUOUS_LEARNING.md', 'SELF_LEARNING_ARCHITECTURE.md']) {
+  for (const document of ['CONTINUOUS_LEARNING.md', 'SELF_LEARNING_ARCHITECTURE.md', 'WORKSTATION.md']) {
     const versions = LANGUAGES.map((language) => path.join(root, 'docs', language, document));
     for (const file of versions) assert.ok(fs.existsSync(file), `Fehlt: ${path.relative(root, file)}`);
 
@@ -72,7 +72,7 @@ test('the documentation exists in both languages with the same structure', () =>
 });
 
 test('each documentation page links to its counterpart', () => {
-  for (const document of ['CONTINUOUS_LEARNING.md', 'SELF_LEARNING_ARCHITECTURE.md']) {
+  for (const document of ['CONTINUOUS_LEARNING.md', 'SELF_LEARNING_ARCHITECTURE.md', 'WORKSTATION.md']) {
     for (const language of LANGUAGES) {
       const other = LANGUAGES.find((candidate) => candidate !== language);
       const source = fs.readFileSync(path.join(root, 'docs', language, document), 'utf8');
