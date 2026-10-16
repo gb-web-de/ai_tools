@@ -79,9 +79,11 @@ Welche Werkzeuge es gibt und bei welchen Wörtern sie passen, steht in `workstat
 | Claude Code (Terminal, PhpStorm) | ja | ja | – |
 | Codex (Terminal, PhpStorm, ChatGPT-App) | ja | ja | `~/.codex/AGENTS.md` |
 | GitHub Copilot CLI | nein, Copilot ignoriert Prompt-Hooks | ja | `~/.copilot/copilot-instructions.md` |
-| Google Antigravity (`agy`, App, IDE) | nein, Antigravity hat keinen Prompt-Hook | ja, als Plugin | im Plugin |
+| Google Antigravity (`agy`, App, IDE) | nein, Antigravity hat keinen Prompt-Hook | nein, siehe unten | als Plugin |
 
 „Regeln“ ist eine kurze Textdatei (`workstation/AGENTS.md`), die der Assistent bei jedem Start liest. Sie wiederholt die Datenschutz-Regeln in Worten, damit sie auch dort gelten, wo ein Hook fehlt.
+
+Antigravity bekommt bewusst keinen Datei-Hook. Ein Antigravity-Hook muss zu jedem Befehl „erlauben“, „sperren“ oder „fragen“ sagen, ein „mir egal“ gibt es nicht. Sonst sperrt Antigravity alles, auch normale Dateien und Skripte. Dort gelten deshalb nur die Regeln.
 
 ChatGPT im Browser oder in der Handy-App kommt an deinen Rechner nicht heran. Willst du ChatGPT mit diesen Regeln nutzen, nimm Codex mit demselben Konto.
 

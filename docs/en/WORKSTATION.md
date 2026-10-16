@@ -79,9 +79,11 @@ Which tools exist and which words they match is listed in `workstation/mcp-catal
 | Claude Code (terminal, PhpStorm) | yes | yes | – |
 | Codex (terminal, PhpStorm, ChatGPT app) | yes | yes | `~/.codex/AGENTS.md` |
 | GitHub Copilot CLI | no, Copilot ignores prompt hooks | yes | `~/.copilot/copilot-instructions.md` |
-| Google Antigravity (`agy`, app, IDE) | no, Antigravity has no prompt hook | yes, as a plugin | inside the plugin |
+| Google Antigravity (`agy`, app, IDE) | no, Antigravity has no prompt hook | no, see below | as a plugin |
 
 "Rules" is a short text file (`workstation/AGENTS.md`) that the assistant reads at every start. It repeats the privacy rules in words, so they also apply where a hook is missing.
+
+Antigravity deliberately gets no file hook. An Antigravity hook has to answer "allow", "block" or "ask" for every command; there is no "no opinion". Otherwise Antigravity blocks everything, including ordinary files and scripts. Only the rules apply there.
 
 ChatGPT in the browser or the phone app cannot reach your computer. If you want to use ChatGPT with these rules, use Codex with the same account.
 
