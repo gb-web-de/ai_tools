@@ -26,7 +26,7 @@ PATTERNS = [
     {
         "id": "INLINE_EVENT_HANDLER_XSS",
         "severity": "HIGH",
-        "pattern": re.compile(r'on[a-z]+\s*=\s*["\'].*?\{.*?\}', re.IGNORECASE),
+        "pattern": re.compile(r'\bon[a-z]+\s*=\s*["\'].*?\{.*?\}', re.IGNORECASE),
         "message": "Fluid variable used inside inline JS event handler. Vulnerable to Context-XSS!"
     },
     {
