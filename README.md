@@ -113,6 +113,9 @@ npm run learn:fractor     # TypoScript, via Fractor
 npm run test:regression
 npm run fixtures:status
 
+# Zweite Meinung eines anderen Modells zu jedem Fixture-Paar (gibt nichts frei)
+npm run fixtures:ai-review
+
 # JavaScript und TypoScript einer Extension prüfen
 npm run scan:assets -- /pfad/zur/extension
 

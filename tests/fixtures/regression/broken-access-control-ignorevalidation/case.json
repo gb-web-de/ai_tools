@@ -27,5 +27,39 @@
     "status": "PENDING",
     "reviewed_by": null,
     "reviewed_at": null
+  },
+  "ai_review": {
+    "reviewer": "agy",
+    "model": "gemini-4-argon-high",
+    "reviewed_at": "2026-11-16",
+    "input_digest": "dda76c8561fc110f4e947ad68bf0b81e442c264f4bb444515222c61e3f94bc68",
+    "checks": [
+      {
+        "id": 1,
+        "verdict": "CONCERN",
+        "reason": "In `Vulnerable/Classes/Domain/Model/DirectoryEntry.php:11-23` sind `$title` und `$feUser` als `protected` deklariert, ohne dass Setter-Methoden existieren, weshalb der Extbase-`PropertyMapper` in echtem TYPO3-Code überhaupt keine Request-Daten auf `$entry` schreiben kann. Zudem besitzt das Model keinerlei `#[Validate]`-Attribute, sodass `#[IgnoreValidation(['value' => 'entry'])]` in `Vulnerable/Classes/Controller/DirectoryEntryController.php:26` effektiv keine Validierung aushebelt. Darüber hinaus steuert in Extbase nicht die Validierung, sondern `PropertyMappingConfiguration` bzw. das Trusted-Properties-HMAC, welche Properties gemappt werden dürfen."
+      },
+      {
+        "id": 2,
+        "verdict": "CONCERN",
+        "reason": "Das Feld `root_cause` in `case.json` behauptet, durch `#[IgnoreValidation]` werde das Property Mapping nicht mehr durch die Validierungsregeln des Models beschränkt und dadurch Mass Assignment ermöglicht. Das trifft weder auf `Vulnerable/Classes/Domain/Model/DirectoryEntry.php:9-24` zu (das weder Validierungsregeln noch Setter-Methoden besitzt) noch auf Extbase generell, da Validatoren das Property Mapping gar nicht begrenzen. Zudem nennt `root_cause` die fehlende Eigentümerprüfung als Ursache, obwohl `IgnoreValidationOnMutationRule` (`typo3-security-suite/rules/IgnoreValidationOnMutationRule.php:26-63`) ausschließlich auf das `#[IgnoreValidation]`-Attribut prüft und Autorisierungsprüfungen komplett ignoriert."
+      },
+      {
+        "id": 3,
+        "verdict": "CONCERN",
+        "reason": "Auch im sicheren Gegenstück (`Secure/Classes/Domain/Model/DirectoryEntry.php:11-23`) fehlen jegliche Setter-Methoden und `#[Validate]`-Regeln, sodass das bloße Entfernen von `#[IgnoreValidation]` in `Secure/Classes/Controller/DirectoryEntryController.php:26` weder eine echte Aktualisierung von `$entry` erlaubt noch eine Modellvalidierung aktiviert. Zudem führt `Secure/Classes/Controller/DirectoryEntryController.php:28-32` eine zusätzliche Ownership-Prüfung über den `Context` ein, die von der Regel `IgnoreValidationOnMutationRule` gar nicht geprüft wird und bei echtem Mass Assignment auf `$feUser` ohnehin erst nach dem Extbase-Property-Mapping (also auf dem bereits überschriebenen Objekt) greifen würde."
+      },
+      {
+        "id": 4,
+        "verdict": "CONCERN",
+        "reason": "Laut `origin.note` in `case.json` nennt das Advisory `TYPO3-EXT-SA-2026-020` lediglich die allgemeine Schwachstellenklasse („Broken Access Control\"), liefert aber keinen Beleg dafür, dass die Ursache ein `#[IgnoreValidation]`-Attribut auf einer mutierenden Extbase-Action war. Noch weniger stützt die Quellenlage die Behauptung in `origin.also_represents`, dass dieses sehr spezifische `IgnoreValidationOnMutationRule`-Fixture zugleich ein TYPO3-Core-Advisory (`TYPO3-CORE-SA-2026-023`) sowie fünf weitere Extension-Advisories (`TYPO3-EXT-SA-2026-021/023/024/025/026`) repräsentiert, nur weil alle unter die Oberkategorie „Broken Access Control\" fallen."
+      },
+      {
+        "id": 5,
+        "verdict": "PASS",
+        "reason": "Das Feld `expected_identifier` in `case.json` (`typo3Security.brokenAccessControl`) stimmt exakt mit dem Identifier `SecurityRuleIdentifier::BROKEN_ACCESS_CONTROL` überein, den `IgnoreValidationOnMutationRule` in `typo3-security-suite/rules/IgnoreValidationOnMutationRule.php:42` und `:56` emittiert. Unter den verfügbaren Identifiern des Regelsatzes ist dies der einzige und vorgesehene Identifier für die Schwachstellenklasse `BROKEN_ACCESS_CONTROL`."
+      }
+    ],
+    "summary": "Ein menschlicher Reviewer sollte zuerst die grundlegende Diskrepanz zwischen der Regel `IgnoreValidationOnMutationRule` (die nur `#[IgnoreValidation]` prüft) und der behaupteten Schwachstellenursache bzw. Herkunft in `case.json` (`root_cause` und `origin.also_represents` inklusive `TYPO3-CORE-SA-2026-023`) prüfen. Direkt danach sollten die Models in `Vulnerable/Classes/Domain/Model/DirectoryEntry.php` und `Secure/Classes/Domain/Model/DirectoryEntry.php` überarbeitet werden, da ihnen jegliche Setter-Methoden und `#[Validate]`-Regeln fehlen und der Code in echtem TYPO3-Extbase so weder Attribute mutieren noch Validierungen ausführen kann."
   }
 }

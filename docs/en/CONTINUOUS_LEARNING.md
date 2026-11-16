@@ -191,6 +191,21 @@ Once the corpus is fully reviewed, the CI step can be armed:
 npm run fixtures:status -- --require-approved
 ```
 
+### AI pre-review
+
+Before your own review, a second model can read the pairs:
+
+```bash
+npm run fixtures:ai-review
+npm run fixtures:ai-review -- --slug <slug> --model <model>
+```
+
+It answers the same five checks with `PASS` or `CONCERN` and justifies each with file and line. The result is stored as `ai_review` in `case.json`, and `--show` prints it under the matching check. The pre-review approves nothing: `review.status` is still set only by `fixtures:review` with a name.
+
+The review runs through the Antigravity CLI `agy`, by default with `gemini-4-argon-high`. The fixtures were written with Claude, and a model should not grade its own work. `agy models` lists the alternatives. `agy` must be installed and logged in, which is why the pre-review does not run in CI. The reviewer works with `--sandbox` in an empty private directory, without automatic tool approvals, and gets everything in the prompt: `case.json` without review fields, every file of the case and the source of the responsible rule. The human reviewer's name and local paths are not sent.
+
+The result is bound to exactly this input (`input_digest`). When an example, `case.json` or the rule changes, it counts as outdated. Without `--slug` only missing and outdated pre-reviews run. A human approval does not invalidate the pre-review, and vice versa.
+
 ### Limits
 
 The fixtures evidence the behaviour of the rules, not the exploitability of a specific published vulnerability. Advisory-bound pairs currently all carry `VULNERABILITY_CLASS`, because the advisory texts in the knowledge store name the vulnerability class and the affected extension, not the concrete code location. A fixture is not a reconstruction of someone else's code. A `PENDING` pair is a proposal, not approved evidence.

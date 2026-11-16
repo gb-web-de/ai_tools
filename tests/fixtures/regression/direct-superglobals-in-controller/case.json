@@ -14,5 +14,43 @@
     "causal_fidelity": "VULNERABILITY_CLASS",
     "note": "This rule reports a hardening / best-practice violation rather than an exploitable vulnerability on its own. No advisory maps to it."
   },
-  "review": { "status": "PENDING", "reviewed_by": null, "reviewed_at": null }
+  "review": {
+    "status": "PENDING",
+    "reviewed_by": null,
+    "reviewed_at": null
+  },
+  "ai_review": {
+    "reviewer": "agy",
+    "model": "gemini-4-argon-high",
+    "reviewed_at": "2026-11-16",
+    "input_digest": "4d0fad497028f1f24cf4eb9b583ef1b4eb62aae5dd75c68bef8b5c3691b238df",
+    "checks": [
+      {
+        "id": 1,
+        "verdict": "PASS",
+        "reason": "In Vulnerable/Classes/Controller/FilterController.php (Zeilen 18–27) liest ein Extbase-ActionController in Zeile 22 mit $_GET['category'] ?? '' direkt auf die Superglobale zu und übergibt den Wert an die View. Dieses Muster tritt in realen TYPO3-Extensions (v12–v14) häufig auf, wenn Entwickler die PSR-7-Request-Abstraktion umgehen."
+      },
+      {
+        "id": 2,
+        "verdict": "PASS",
+        "reason": "Das Feld root_cause in case.json beschreibt präzise das Verhalten in Vulnerable/Classes/Controller/FilterController.php (Zeile 22): Der Controller liest den Parameter direkt aus $_GET statt über den PSR-7-Request, wodurch Request-Abstraktion und Extbase-Property-Mapping umgangen werden und der Wert ungetypt bleibt."
+      },
+      {
+        "id": 3,
+        "verdict": "PASS",
+        "reason": "Secure/Classes/Controller/FilterController.php (Zeilen 21–26) liest denselben Query-Parameter über $this->request->getQueryParams() aus, stellt per is_string() in Zeile 22 einen String-Wert mit Fallback '' sicher und weist ihn wie Vulnerable/Classes/Controller/FilterController.php (Zeilen 22–26) der View zu. Damit ist die sichere Variante funktional äquivalent und nutzt die vorgesehene PSR-7-Abstraktion."
+      },
+      {
+        "id": 4,
+        "verdict": "PASS",
+        "reason": "Das Objekt origin in case.json (origin.kind: \"RULE_CONTRACT\", origin.causal_fidelity: \"VULNERABILITY_CLASS\", origin.note) beansprucht kein Sicherheits-Advisory, sondern ordnet den Fall korrekt als Best-Practice- bzw. Hardening-Verstoß gemäß typo3-security-suite/rules/DirectSuperglobalsRule.php (Zeilen 40–45) ein."
+      },
+      {
+        "id": 5,
+        "verdict": "PASS",
+        "reason": "Das Feld expected_identifier (\"typo3Security.directSuperglobals\") und rule (\"Security\\\\TYPO3\\\\Rules\\\\DirectSuperglobalsRule\") in case.json stimmen exakt mit der Regel in typo3-security-suite/rules/DirectSuperglobalsRule.php (Zeilen 32–45) überein, die direkten Zugriff auf $_GET, $_POST und $_REQUEST in Controllern meldet."
+      }
+    ],
+    "summary": "Alle fünf Prüfpunkte sind erfüllt; ein menschlicher Reviewer sollte zuerst den direkten Vergleich zwischen dem $_GET-Zugriff in Vulnerable/Classes/Controller/FilterController.php (Zeile 22) und der PSR-7-Abfrage mittels $this->request->getQueryParams() in Secure/Classes/Controller/FilterController.php (Zeilen 21–22) prüfen."
+  }
 }

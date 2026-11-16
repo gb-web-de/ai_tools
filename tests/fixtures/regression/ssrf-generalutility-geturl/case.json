@@ -14,5 +14,43 @@
     "causal_fidelity": "VULNERABILITY_CLASS",
     "note": "The SSRF advisory in the local knowledge store (TYPO3-PSA-2024-005) carries no source link and is a synthetic seed. This pair documents the contract of SsrfGeneralUtilityGetUrlRule, including its allow-list exemption: a target that static analysis resolves to a fixed set of constant strings is not reported."
   },
-  "review": { "status": "PENDING", "reviewed_by": null, "reviewed_at": null }
+  "review": {
+    "status": "PENDING",
+    "reviewed_by": null,
+    "reviewed_at": null
+  },
+  "ai_review": {
+    "reviewer": "agy",
+    "model": "gemini-4-argon-high",
+    "reviewed_at": "2026-11-16",
+    "input_digest": "dcd069e42fdf904e2407295a2462473b9629f307aa8ebac227d0ca49afc856ae",
+    "checks": [
+      {
+        "id": 1,
+        "verdict": "PASS",
+        "reason": "In `Vulnerable/Classes/Service/FeedImportService.php` (Zeilen 19–22) wird ein vom Aufrufer übergebener String `$feedUrl` ungeprüft an `GeneralUtility::getUrl()` weitergereicht und die Antwort direkt zurückgegeben. Dieses Muster tritt in realen TYPO3-Extensions regelmäßig bei Feed-, API- oder Datei-Import-Services auf und führt zu einer klassischen SSRF-Schwachstelle."
+      },
+      {
+        "id": 2,
+        "verdict": "PASS",
+        "reason": "Das Feld `root_cause` in `case.json` beschreibt exakt das Verhalten von `Vulnerable/Classes/Service/FeedImportService.php` (Zeilen 19–22): Der vom Aufrufer gelieferte Parameter `$feedUrl` wird ohne Einschränkung von Schema oder Host direkt als Ziel für `GeneralUtility::getUrl()` genutzt und das Ergebnis an den Aufrufer zurückgegeben."
+      },
+      {
+        "id": 3,
+        "verdict": "PASS",
+        "reason": "`Secure/Classes/Service/FeedImportService.php` (Zeilen 18–30) erfüllt dieselbe Aufgabe des Feed-Abrufs über `GeneralUtility::getUrl()`, bildet die Eingabe `$feedKey` jedoch über die feste Allow-List `self::ALLOWED_FEEDS` auf zur Compile-Zeit bekannte Ziel-URLs ab und wirft bei unbekannten Schlüsseln eine `\\InvalidArgumentException` (Zeilen 25–27). Dies setzt genau das in `SsrfGeneralUtilityGetUrlRule.php` (Zeilen 56–62) vorgesehene Härtungsmuster für konstante Strings um."
+      },
+      {
+        "id": 4,
+        "verdict": "PASS",
+        "reason": "Das Objekt `origin` in `case.json` (`kind: \"RULE_CONTRACT\"`, `causal_fidelity: \"VULNERABILITY_CLASS\"`, `reference` und `note`) erhebt keinen unbelegten Anspruch auf ein reales Advisory, sondern legt transparent dar, dass das Paar den Regelvertrag von `SsrfGeneralUtilityGetUrlRule` (insbesondere die Allow-List-Ausnahme in `SsrfGeneralUtilityGetUrlRule.php`, Zeilen 56–62) dokumentiert."
+      },
+      {
+        "id": 5,
+        "verdict": "PASS",
+        "reason": "Das Feld `expected_identifier` in `case.json` ist mit `typo3Security.ssrf` korrekt auf den für SSRF zuständigen Identifier gesetzt, den `SsrfGeneralUtilityGetUrlRule.php` in Zeile 68 über `SecurityRuleIdentifier::SSRF` emittiert."
+      }
+    ],
+    "summary": "Alle fünf Prüfpunkte sind ohne Beanstandung erfüllt; ein menschlicher Reviewer kann sich zuerst `Secure/Classes/Service/FeedImportService.php` (Zeilen 18–30) im Zusammenspiel mit der Konstant-String-Prüfung in `SsrfGeneralUtilityGetUrlRule.php` (Zeilen 56–62) ansehen, um die Abbildung über die Allow-List nachzuvollziehen."
+  }
 }

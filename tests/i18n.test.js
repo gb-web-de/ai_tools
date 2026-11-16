@@ -43,7 +43,7 @@ test('translations differ per language and interpolate parameters', () => {
 });
 
 test('every user-facing CLI accepts --lang', () => {
-  const clis = ['fixture-status.js', 'fixture-review.js', 'knowledge-import.js', 'knowledge-export.js', 'learn-advisories.js'];
+  const clis = ['fixture-status.js', 'fixture-review.js', 'fixture-ai-review.js', 'knowledge-import.js', 'knowledge-export.js', 'learn-advisories.js'];
   for (const cli of clis) {
     const source = fs.readFileSync(path.join(root, 'scripts', cli), 'utf8');
     assert.match(source, /--lang|lang: \{ type: 'string' \}/u, `${cli} bietet keine Sprachwahl an.`);

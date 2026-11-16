@@ -164,6 +164,35 @@ const MESSAGES = {
     en: 'Note: if either example is changed afterwards, the approval expires (status STALE).',
     de: 'Hinweis: Wird eines der beiden Beispiele danach geändert, verfällt die Freigabe (Status STALE).',
   },
+  'review.aiHeading': {
+    en: 'Check (AI pre-review: {reviewer}, {model}, {date} - a second opinion, not an approval):',
+    de: 'Prüfpunkte (KI-Vorprüfung: {reviewer}, {model}, {date} - zweite Meinung, keine Freigabe):',
+  },
+  'review.aiPass': { en: '[ok]', de: '[ok]' },
+  'review.aiConcern': { en: '[concern]', de: '[Einwand]' },
+  'review.aiSummary': { en: 'AI summary: ', de: 'KI-Fazit: ' },
+  'review.aiStale': {
+    en: 'The AI pre-review is outdated: examples, case.json or the rule changed since. Re-run: npm run fixtures:ai-review -- --slug {slug}',
+    de: 'Die KI-Vorprüfung ist veraltet: Beispiele, case.json oder Regel haben sich seitdem geändert. Neu: npm run fixtures:ai-review -- --slug {slug}',
+  },
+  'review.aiMissing': {
+    en: 'No AI pre-review yet: npm run fixtures:ai-review -- --slug {slug}',
+    de: 'Noch keine KI-Vorprüfung: npm run fixtures:ai-review -- --slug {slug}',
+  },
+
+  // --- AI pre-review ---
+  'aiReview.running': { en: 'Reviewing {slug} with agy ...', de: 'Prüfe {slug} mit agy ...' },
+  'aiReview.clean': { en: '  {slug}: no concerns', de: '  {slug}: keine Einwände' },
+  'aiReview.concerns': { en: '  {slug}: concerns on check {checks}', de: '  {slug}: Einwände bei Prüfpunkt {checks}' },
+  'aiReview.failed': { en: '  {slug}: AI pre-review failed: {message}', de: '  {slug}: KI-Vorprüfung fehlgeschlagen: {message}' },
+  'aiReview.nothingToDo': {
+    en: 'All AI pre-reviews are current. Re-run a single case with --slug <slug>.',
+    de: 'Alle KI-Vorprüfungen sind aktuell. Einen Fall neu prüfen: --slug <slug>.',
+  },
+  'aiReview.notApproval': {
+    en: 'The AI pre-review approves nothing. Its concerns appear in the human review: npm run fixtures:review -- --show <slug>',
+    de: 'Die KI-Vorprüfung gibt nichts frei. Ihre Einwände stehen im Review: npm run fixtures:review -- --show <slug>',
+  },
 
   // --- asset scan ---
   'scan.targetRequired': {

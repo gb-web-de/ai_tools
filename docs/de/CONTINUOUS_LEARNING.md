@@ -191,6 +191,21 @@ Ist der Bestand vollständig geprüft, kann der CI-Schritt scharf geschaltet wer
 npm run fixtures:status -- --require-approved
 ```
 
+### KI-Vorprüfung
+
+Vor dem eigenen Review kann ein zweites Modell die Paare lesen:
+
+```bash
+npm run fixtures:ai-review
+npm run fixtures:ai-review -- --slug <slug> --model <modell>
+```
+
+Es beantwortet dieselben fünf Prüfpunkte mit `PASS` oder `CONCERN` und begründet jeden mit Datei und Zeile. Das Ergebnis steht als `ai_review` in `case.json`, `--show` zeigt es unter dem jeweiligen Prüfpunkt. Die Vorprüfung gibt nichts frei: `review.status` setzt weiterhin nur `fixtures:review` mit einem Namen.
+
+Geprüft wird über die Antigravity-CLI `agy`, voreingestellt mit `gemini-4-argon-high`. Die Fixtures entstanden mit Claude, und ein Modell soll nicht seine eigene Arbeit prüfen. `agy models` listet die Alternativen. `agy` muss installiert und angemeldet sein; in CI läuft die Vorprüfung deshalb nicht. Der Prüfer arbeitet mit `--sandbox` in einem leeren privaten Verzeichnis, ohne automatische Werkzeug-Freigaben, und bekommt alles im Prompt: `case.json` ohne Review-Felder, alle Dateien des Falls und die Quelle der zuständigen Regel. Name des menschlichen Prüfers und lokale Pfade gehen nicht mit.
+
+Das Ergebnis ist an genau diese Eingabe gebunden (`input_digest`). Ändert sich ein Beispiel, `case.json` oder die Regel, gilt es als veraltet. Ohne `--slug` laufen nur fehlende und veraltete Vorprüfungen. Eine menschliche Freigabe macht die Vorprüfung nicht ungültig und umgekehrt.
+
 ### Grenzen
 
 Die Fixtures belegen das Verhalten der Regeln, nicht die Ausnutzbarkeit einer konkreten veröffentlichten Schwachstelle. Advisory-gebundene Paare tragen derzeit durchgehend `VULNERABILITY_CLASS`, weil die Advisory-Texte im Wissensspeicher die Schwachstellenklasse und die betroffene Extension nennen, nicht die konkrete Codestelle. Ein Fixture ist keine Rekonstruktion fremden Codes. Ein `PENDING`-Paar ist ein Vorschlag, kein freigegebener Nachweis.

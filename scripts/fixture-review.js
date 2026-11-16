@@ -4,6 +4,7 @@ import path from 'node:path';
 import process from 'node:process';
 import { parseArgs } from 'node:util';
 import { contentDigest, loadCases } from './lib/regression-fixtures.js';
+import { aiReviewStatus, CHECK_KEYS } from './lib/fixture-ai-review.js';
 import { resolveLanguage, translator } from './lib/i18n.js';
 
 /**
@@ -36,8 +37,15 @@ function show(entry, t) {
     console.log();
   }
 
-  console.log(t('review.checklistHeading'));
-  for (const key of ['review.check1', 'review.check2', 'review.check3', 'review.check4', 'review.check5']) console.log(`  - ${t(key)}`);
+  const aiStatus = aiReviewStatus(entry);
+  const ai = aiStatus === 'CURRENT' ? entry.ai_review : null;
+  console.log(ai ? t('review.aiHeading', { reviewer: ai.reviewer, model: ai.model, date: ai.reviewed_at }) : t('review.checklistHeading'));
+  for (const [index, key] of CHECK_KEYS.entries()) {
+    console.log(`  - ${t(key)}`);
+    const check = ai?.checks[index];
+    if (check) console.log(`      ${t(check.verdict === 'PASS' ? 'review.aiPass' : 'review.aiConcern')} ${check.reason}`);
+  }
+  console.log(ai ? `\n${t('review.aiSummary')}${ai.summary}` : `\n${t(aiStatus === 'STALE' ? 'review.aiStale' : 'review.aiMissing', { slug: entry.slug })}`);
   console.log(`\n${t('review.checkNotYours')}`);
   console.log(`\n${t('review.hintApprove')}  npm run fixtures:review -- --slug ${entry.slug} --by "<name>"`);
   console.log(`${t('review.hintReject')}  npm run fixtures:review -- --slug ${entry.slug} --reject --by "<name>" --note "<reason>"`);

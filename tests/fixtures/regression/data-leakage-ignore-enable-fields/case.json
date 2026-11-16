@@ -19,5 +19,39 @@
     "status": "PENDING",
     "reviewed_by": null,
     "reviewed_at": null
+  },
+  "ai_review": {
+    "reviewer": "agy",
+    "model": "gemini-4-argon-high",
+    "reviewed_at": "2026-11-16",
+    "input_digest": "46116ad4a893b8c0f7ac5bb1215d32bc278e084c4bfca5f447ff3d9272919a4d",
+    "checks": [
+      {
+        "id": 1,
+        "verdict": "PASS",
+        "reason": "In Vulnerable/Classes/Domain/Repository/TranslationLogRepository.php (Zeilen 20–26) wird in initializeObject() über GeneralUtility::makeInstance(Typo3QuerySettings::class) und $querySettings->setIgnoreEnableFields(true) (Zeile 23) die Auswertung der Enable-Fields global in den Standard-QuerySettings ($this->setDefaultQuerySettings($querySettings), Zeile 25) deaktiviert. Dieses Muster tritt in realen TYPO3-Extbase-Extensions (v12–v14) häufig auf, wenn Entwickler für einzelne Abfragen eingeschränkte Datensätze benötigen und die Einstellung versehentlich repository-weit setzen."
+      },
+      {
+        "id": 2,
+        "verdict": "PASS",
+        "reason": "Das Feld root_cause in case.json beschreibt exakt den Code in Vulnerable/Classes/Domain/Repository/TranslationLogRepository.php (Zeilen 22–25), in dem setIgnoreEnableFields(true) auf den Standard-QuerySettings des Repositorys konfiguriert wird. Die dort aufgeführten Auswirkungen entsprechen zudem genau der Fehlermeldung der geprüften Regel in typo3-security-suite/rules/ExtbaseQuerySettingsDataLeakRule.php (Zeilen 63–70)."
+      },
+      {
+        "id": 3,
+        "verdict": "PASS",
+        "reason": "Das sichere Gegenstück in Secure/Classes/Domain/Repository/TranslationLogRepository.php (Zeilen 19–28) behält die identische Repository-Struktur und Initialisierung in initializeObject() bei, setzt jedoch in Zeile 24 explizit $querySettings->setIgnoreEnableFields(false) vor dem Aufruf von $this->setDefaultQuerySettings($querySettings) (Zeile 26). Damit erfüllt das Repository dieselbe Funktion für reguläre Datensatzabfragen sicher und stellt zugleich sicher, dass die Regel bei false nicht auslöst."
+      },
+      {
+        "id": 4,
+        "verdict": "PASS",
+        "reason": "Die Herkunftsangabe unter origin in case.json ist mit causal_fidelity auf VULNERABILITY_CLASS für TYPO3-CORE-SA-2026-022 angemessen gewählt und behauptet nicht mehr, als die Quelle hergibt. In origin.note wird transparent dokumentiert, dass das Advisory keinen konkreten Code-Ort nennt und die Fixture die Schwachstellenklasse idiomatisch in einem Extbase-Repository darstellt, statt eine Rekonstruktion von TYPO3-Core-Code zu beanspruchen."
+      },
+      {
+        "id": 5,
+        "verdict": "PASS",
+        "reason": "Das Feld expected_identifier (\"typo3Security.dataLeakage\") und das Feld rule (\"Security\\\\TYPO3\\\\Rules\\\\ExtbaseQuerySettingsDataLeakRule\") in case.json passen exakt zur Regel in typo3-security-suite/rules/ExtbaseQuerySettingsDataLeakRule.php (Zeilen 63–71), die für setIgnoreEnableFields(true) den Identifier SecurityRuleIdentifier::DATA_LEAKAGE (typo3Security.dataLeakage) emittiert."
+      }
+    ],
+    "summary": "Alle fünf Prüfpunkte sind ohne Beanstandung erfüllt, da das Fixture-Paar die globale Deaktivierung der Enable-Fields in Extbase-Repositories (Vulnerable/Classes/Domain/Repository/TranslationLogRepository.php, Zeilen 20–26) sowie deren sichere Konfiguration (Secure/Classes/Domain/Repository/TranslationLogRepository.php, Zeilen 21–27) präzise abbildet. Ein menschlicher Reviewer sollte zuerst den direkten Vergleich von Zeile 23 in der verwundbaren und Zeile 24 in der sicheren Fixture zusammen mit origin.note in case.json prüfen, um die saubere Einordnung als VULNERABILITY_CLASS nachzuvollziehen."
   }
 }

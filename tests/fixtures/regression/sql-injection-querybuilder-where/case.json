@@ -21,5 +21,39 @@
     "reviewed_at": "2026-09-24",
     "content_digest": "3e35071fa48f89ea89c4e4d55550564c84f865a760fdeda8f3c05ca98d27ccb2",
     "note": null
+  },
+  "ai_review": {
+    "reviewer": "agy",
+    "model": "gemini-4-argon-high",
+    "reviewed_at": "2026-11-16",
+    "input_digest": "19ce82b7d63a2d76044732ad9ffe890e88f822cea31d13804455b50abc696d76",
+    "checks": [
+      {
+        "id": 1,
+        "verdict": "CONCERN",
+        "reason": "In `Vulnerable/Classes/Domain/Repository/FormAnswerRepository.php` (Zeile 25 und 32) wird der String-Parameter `$formIdentifier` ohne umschließende SQL-Anführungszeichen per `->where('form_identifier = ' . $formIdentifier)` konkateniert. Da `form_identifier` ein String-Feld ist (vgl. `Connection::PARAM_STR` in `Secure/Classes/Domain/Repository/FormAnswerRepository.php`, Zeile 35), führt diese Abfrage bei regulären Formular-Bezeichnern sofort zu einem SQL-Fehler (unbekannter Spaltenname), statt wie in realem verwundbarem TYPO3-Code als `\"form_identifier = '\" . $formIdentifier . \"'\"` in Anführungszeichen gesetzt zu werden."
+      },
+      {
+        "id": 2,
+        "verdict": "PASS",
+        "reason": "Das Feld `root_cause` in `case.json` beschreibt exakt das Muster in `Vulnerable/Classes/Domain/Repository/FormAnswerRepository.php` (Zeile 32), bei dem `$formIdentifier` per String-Konkatenation in `QueryBuilder::where()` eingebaut wird, statt über `createNamedParameter()` gebunden zu werden. Dadurch gelangt der Wert direkt in den SQL-String und erlaubt das Verändern der Abfragestruktur."
+      },
+      {
+        "id": 3,
+        "verdict": "PASS",
+        "reason": "`Secure/Classes/Domain/Repository/FormAnswerRepository.php` (Zeilen 25–42) setzt die beabsichtigte Abfrage aus derselben Tabelle und mit denselben Rückgabespalten (`uid`, `form_identifier`, `answer_data`) sicher um, indem `$formIdentifier` in Zeile 33–36 über `$queryBuilder->expr()->eq()` und `$queryBuilder->createNamedParameter($formIdentifier, Connection::PARAM_STR)` gebunden wird."
+      },
+      {
+        "id": 4,
+        "verdict": "PASS",
+        "reason": "Das Objekt `origin` in `case.json` (`advisory_id`, `causal_fidelity: \"VULNERABILITY_CLASS\"` und `note`) gibt transparent an, dass das Advisory `TYPO3-EXT-SA-2026-027` nur die Schwachstellenklasse und die betroffene Extension benennt und das Fixture die Klasse idiomatisch nachbildet, ohne den Originalcode des Herstellers zu beanspruchen."
+      },
+      {
+        "id": 5,
+        "verdict": "PASS",
+        "reason": "Das Feld `expected_identifier` (`\"typo3Security.sqlInjection\"`) und `rule` (`\"Security\\\\TYPO3\\\\Rules\\\\SqlInjectionQueryBuilderRule\"`) in `case.json` stimmen mit dem in `typo3-security-suite/rules/SqlInjectionQueryBuilderRule.php` (Zeilen 55–60) für String-Konkatenation in `QueryBuilder::where()` emittierten Identifier `SecurityRuleIdentifier::SQL_INJECTION` überein."
+      }
+    ],
+    "summary": "Ein menschlicher Reviewer sollte zuerst `Vulnerable/Classes/Domain/Repository/FormAnswerRepository.php` in Zeile 32 prüfen, da der String-Parameter `$formIdentifier` dort ohne SQL-Anführungszeichen (`'form_identifier = ' . $formIdentifier` statt `\"form_identifier = '\" . $formIdentifier . \"'\"`) konkateniert wird und die Abfrage somit bei normalen String-Werten mit einem SQL-Fehler abbricht."
   }
 }

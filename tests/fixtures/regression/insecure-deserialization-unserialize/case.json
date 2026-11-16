@@ -14,5 +14,43 @@
     "causal_fidelity": "VULNERABILITY_CLASS",
     "note": "No advisory in the local knowledge store is classified as DESERIALIZATION. This pair documents the contract of InsecureDeserializationRule and is not tied to a published advisory."
   },
-  "review": { "status": "PENDING", "reviewed_by": null, "reviewed_at": null }
+  "review": {
+    "status": "PENDING",
+    "reviewed_by": null,
+    "reviewed_at": null
+  },
+  "ai_review": {
+    "reviewer": "agy",
+    "model": "gemini-4-argon-high",
+    "reviewed_at": "2026-11-16",
+    "input_digest": "f91b4a0177cf73b27f71ec5596b2d495d583a00d73d7577d8b0ddc897e4e9016",
+    "checks": [
+      {
+        "id": 1,
+        "verdict": "PASS",
+        "reason": "In `Vulnerable/Classes/Service/SessionPayloadService.php` (Zeile 20–25) wird `unserialize($storedPayload)` ohne zweites Options-Argument aufgerufen, um ein Array aus einem gespeicherten Payload wiederherzustellen. Dieses Muster tritt in realen TYPO3-Extensions auf, wenn Entwickler annehmen, die nachgelagerte Prüfung `is_array($decoded)` (Zeile 24) reiche aus, obwohl `unserialize()` Objekte bereits zuvor instanziiert."
+      },
+      {
+        "id": 2,
+        "verdict": "PASS",
+        "reason": "Das Feld `root_cause` in `case.json` trifft exakt auf den Aufruf `unserialize($storedPayload)` in `Vulnerable/Classes/Service/SessionPayloadService.php` (Zeile 22) zu, bei dem das zweite Argument zur Einschränkung von `allowed_classes` fehlt. Dadurch können beliebige über den Autoloader erreichbare Klassen instanziiert und deren magische Methoden ausgeführt werden."
+      },
+      {
+        "id": 3,
+        "verdict": "CONCERN",
+        "reason": "In `Secure/Classes/Service/SessionPayloadService.php` (Zeile 22) wird `unserialize($storedPayload)` durch `json_decode($storedPayload, true, 512, JSON_THROW_ON_ERROR)` ersetzt, obwohl die Klasse ausschließlich `decode(string $storedPayload): array` bereitstellt und damit das erwartete Eingabeformat von PHP-Serialisierung auf JSON ändert. Für denselben `$storedPayload`-Eingabewert gibt die sichere Variante daher `[]` (Zeile 23–25) zurück; funktional äquivalent zum `root_cause` in `case.json` und passend zur Whitelist-Prüfung in `typo3-security-suite/rules/InsecureDeserializationRule.php` (Zeile 60–81) wäre `unserialize($storedPayload, ['allowed_classes' => false])` oder das gemeinsame Kapseln von `encode()` und `decode()`."
+      },
+      {
+        "id": 4,
+        "verdict": "PASS",
+        "reason": "Das Feld `origin` in `case.json` weist das Fixture-Paar mit `kind: \"RULE_CONTRACT\"` und `causal_fidelity: \"VULNERABILITY_CLASS\"` transparent als synthetischen Regelvertrag unter Verweis auf `CLAUDE.md section 4` aus. Zudem stellt `origin.note` in `case.json` klar, dass kein entsprechendes Advisory vorliegt, sodass nicht mehr behauptet wird, als die Quelle belegt."
+      },
+      {
+        "id": 5,
+        "verdict": "PASS",
+        "reason": "Das Feld `expected_identifier` (`\"typo3Security.insecureDeserialization\"`) und das Feld `rule` (`\"Security\\\\TYPO3\\\\Rules\\\\InsecureDeserializationRule\"`) in `case.json` passen exakt zur Regel `typo3-security-suite/rules/InsecureDeserializationRule.php` (Zeile 16, 47, 56, 79). Dieser Identifier ist im Regelsatz eindeutig für die Klasse `DESERIALIZATION` zuständig."
+      }
+    ],
+    "summary": "Ein menschlicher Reviewer sollte zuerst `Secure/Classes/Service/SessionPayloadService.php` (Zeile 22) prüfen, da der Wechsel von `unserialize()` auf `json_decode()` in einer reinen `decode()`-Methode das Eingabeformat für bestehende Payloads ändert, statt denselben Eingabewert sicher mit `unserialize($storedPayload, ['allowed_classes' => false])` zu dekodieren."
+  }
 }

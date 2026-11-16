@@ -14,5 +14,43 @@
     "causal_fidelity": "VULNERABILITY_CLASS",
     "note": "The XSS advisory in the local knowledge store (TYPO3-PSA-2024-003) carries no source link and is a synthetic seed. This pair documents the contract of RawFluidOrEchoXssRule instead."
   },
-  "review": { "status": "PENDING", "reviewed_by": null, "reviewed_at": null }
+  "review": {
+    "status": "PENDING",
+    "reviewed_by": null,
+    "reviewed_at": null
+  },
+  "ai_review": {
+    "reviewer": "agy",
+    "model": "gemini-4-argon-high",
+    "reviewed_at": "2026-11-16",
+    "input_digest": "cc67c2072bf146ab7d4f9e64802bd6124f115f93feec9c49e21a3ae35811568a",
+    "checks": [
+      {
+        "id": 1,
+        "verdict": "PASS",
+        "reason": "In Vulnerable/Classes/Controller/SearchController.php (Zeilen 19–23) gibt resultAction() den aus dem Request stammenden Parameter $searchTerm unescaped per echo aus, bevor $this->htmlResponse('') zurückgegeben wird. Solche direkten echo-Ausgaben in Extbase-Controllern treten in unsauberem oder aus Altcode übernommenem TYPO3-Code real auf und bilden exakt das AST-Muster ab, das RawFluidOrEchoXssRule.php (Zeilen 20 und 29) adressiert."
+      },
+      {
+        "id": 2,
+        "verdict": "PASS",
+        "reason": "Das Feld root_cause in case.json trifft exakt auf Vulnerable/Classes/Controller/SearchController.php (Zeilen 19–23) zu: Der Controller gibt den Request-Parameter $searchTerm direkt mittels echo aus und umgeht durch return $this->htmlResponse('') (Zeile 23) das standardmäßige Output-Escaping von Fluid."
+      },
+      {
+        "id": 3,
+        "verdict": "PASS",
+        "reason": "In Secure/Classes/Controller/SearchController.php (Zeilen 18–23) verarbeitet resultAction() denselben Parameter $searchTerm, übergibt ihn in Zeile 20 mittels $this->view->assign('searchTerm', $searchTerm) an die Fluid-View und gibt in Zeile 22 $this->htmlResponse() zurück. Damit erfüllt das sichere Gegenstück dieselbe Aufgabe auf dem in TYPO3 v12 bis v14 vorgesehenen sicheren Weg."
+      },
+      {
+        "id": 4,
+        "verdict": "PASS",
+        "reason": "Das Feld origin in case.json (kind: \"RULE_CONTRACT\", causal_fidelity: \"VULNERABILITY_CLASS\", reference und note) benennt transparent, dass der lokale Eintrag TYPO3-PSA-2024-003 lediglich ein synthetischer Seed ohne Quelllink ist, und beansprucht folgerichtig nur die Dokumentation des Regelvertrags von RawFluidOrEchoXssRule."
+      },
+      {
+        "id": 5,
+        "verdict": "PASS",
+        "reason": "Das Feld expected_identifier (\"typo3Security.xssEcho\") und das Feld rule (\"Security\\\\TYPO3\\\\Rules\\\\RawFluidOrEchoXssRule\") in case.json entsprechen genau dem Identifier SecurityRuleIdentifier::XSS_ECHO, den typo3-security-suite/rules/RawFluidOrEchoXssRule.php in Zeile 33 für direkte echo-Ausgaben in Controllern vergibt."
+      }
+    ],
+    "summary": "Alle fünf Prüfpunkte sind erfüllt; ein menschlicher Reviewer sollte zuerst die Gegenüberstellung von Vulnerable/Classes/Controller/SearchController.php (Zeilen 19–23) und Secure/Classes/Controller/SearchController.php (Zeilen 18–23) sowie die Einordnung unter origin in case.json einsehen."
+  }
 }

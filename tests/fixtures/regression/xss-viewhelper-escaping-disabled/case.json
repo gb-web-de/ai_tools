@@ -14,5 +14,43 @@
     "causal_fidelity": "VULNERABILITY_CLASS",
     "note": "No advisory in the local knowledge store maps to this rule. This pair documents the contract of FluidViewHelperEscapingRule."
   },
-  "review": { "status": "PENDING", "reviewed_by": null, "reviewed_at": null }
+  "review": {
+    "status": "PENDING",
+    "reviewed_by": null,
+    "reviewed_at": null
+  },
+  "ai_review": {
+    "reviewer": "agy",
+    "model": "gemini-4-argon-high",
+    "reviewed_at": "2026-11-16",
+    "input_digest": "1ce79490e2a6ebbea333f9dcb5a500be9c59abbefd90ce31f5e5f10c33b83f06",
+    "checks": [
+      {
+        "id": 1,
+        "verdict": "PASS",
+        "reason": "In `Vulnerable/Classes/ViewHelpers/TeaserViewHelper.php` (Zeile 18 und 27) wird `protected $escapeOutput = false;` gesetzt, damit das zurückgegebene `<p class=\"teaser\">`-Tag nicht von Fluid maskiert wird, während `$this->arguments['text']` ungefiltert konkateniert wird. Genau dieses Muster tritt in realen TYPO3-Projekten (v12–v14) häufig auf, wenn Entwickler eigenes HTML aus einem ViewHelper zurückgeben und dabei vergessen, die eingebetteten Argumente selbst zu escapen."
+      },
+      {
+        "id": 2,
+        "verdict": "PASS",
+        "reason": "Das Feld `root_cause` in `case.json` beschreibt exakt den Fehler in `Vulnerable/Classes/ViewHelpers/TeaserViewHelper.php`: Durch `$escapeOutput = false` (Zeile 18) unterbleibt Fluids automatische Ausgabemaskierung, sodass das in Zeile 27 direkt eingebettete Argument `$this->arguments['text']` als aktives HTML gerendert wird."
+      },
+      {
+        "id": 3,
+        "verdict": "CONCERN",
+        "reason": "In `Secure/Classes/ViewHelpers/TeaserViewHelper.php` (Zeile 16–28) bleibt `$escapeOutput` auf dem Standardwert `true` von `AbstractViewHelper`, während `render()` in Zeile 27 weiterhin `'<p class=\"teaser\">' . htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</p>'` zurückgibt. Dadurch maskiert Fluid den gesamten Rückgabewert erneut, sodass das `<p class=\"teaser\">`-Markup als sichtbarer Text (`&lt;p class=&quot;teaser&quot;&gt;...`) ausgegeben und `$text` doppelt mit `htmlspecialchars()` kodiert wird. Zudem widerspricht der Docblock in Zeile 12–14 („The markup the ViewHelper needs is kept in the template“) direkt dem Code in Zeile 27, weshalb das sichere Gegenstück funktional fehlerhaft und nicht äquivalent zur verwundbaren Variante ist."
+      },
+      {
+        "id": 4,
+        "verdict": "PASS",
+        "reason": "Das Objekt `origin` in `case.json` (`kind: \"RULE_CONTRACT\"`, `causal_fidelity: \"VULNERABILITY_CLASS\"`, `reference` und `note`) legt transparent dar, dass kein konkretes Advisory zugeordnet ist, sondern der Regelvertrag von `FluidViewHelperEscapingRule` abgebildet wird. Damit beansprucht die Herkunftsangabe nicht mehr, als die Quelle hergibt."
+      },
+      {
+        "id": 5,
+        "verdict": "PASS",
+        "reason": "Die Felder `expected_identifier` (`typo3Security.xssViewHelperEscaping`) und `rule` (`Security\\TYPO3\\Rules\\FluidViewHelperEscapingRule`) in `case.json` passen exakt zu `typo3-security-suite/rules/FluidViewHelperEscapingRule.php` (Zeile 35–43), wo das Setzen von `$escapeOutput = false` oder `$escapeChildren = false` in ViewHelpern mit `SecurityRuleIdentifier::XSS_VIEWHELPER_ESCAPING` gemeldet wird."
+      }
+    ],
+    "summary": "Ein menschlicher Reviewer sollte zuerst `Secure/Classes/ViewHelpers/TeaserViewHelper.php` (Zeile 12–28) prüfen, da `$escapeOutput` dort auf dem Standardwert `true` belassen wird, `render()` in Zeile 27 aber weiterhin `<p class=\"teaser\">...</p>` samt bereits via `htmlspecialchars()` maskiertem `$text` zurückgibt. Das führt in Fluid zu doppelt maskiertem Text und als Klartext ausgegebenen HTML-Tags (`&lt;p class=&quot;teaser&quot;&gt;`), sodass das sichere Gegenstück nicht funktional äquivalent ist."
+  }
 }

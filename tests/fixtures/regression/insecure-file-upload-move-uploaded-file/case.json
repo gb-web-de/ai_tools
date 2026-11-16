@@ -14,5 +14,43 @@
     "causal_fidelity": "VULNERABILITY_CLASS",
     "note": "No advisory in the local knowledge store maps to this rule. This pair documents the contract of InsecureFileOperationRule."
   },
-  "review": { "status": "PENDING", "reviewed_by": null, "reviewed_at": null }
+  "review": {
+    "status": "PENDING",
+    "reviewed_by": null,
+    "reviewed_at": null
+  },
+  "ai_review": {
+    "reviewer": "agy",
+    "model": "gemini-4-argon-high",
+    "reviewed_at": "2026-11-16",
+    "input_digest": "9f8cbacd0390d614051dc5ccee6a35119f8f77e9b7ad8e3302a770fde403aad6",
+    "checks": [
+      {
+        "id": 1,
+        "verdict": "PASS",
+        "reason": "In `Vulnerable/Classes/Service/AttachmentUploadService.php` (Zeilen 19–21) wird eine hochgeladene Datei ohne Einsatz von FAL direkt per `move_uploaded_file()` und unbereinigtem `$originalName` nach `fileadmin/user_upload/` verschoben. Dieses Muster tritt in realen TYPO3-Extensions regelmäßig auf, wenn Entwickler natives PHP-Upload-Handling statt der TYPO3-Abstraktionsschicht verwenden."
+      },
+      {
+        "id": 2,
+        "verdict": "PASS",
+        "reason": "Das Feld `root_cause` in `case.json` beschreibt exakt das Verhalten in `Vulnerable/Classes/Service/AttachmentUploadService.php` (Zeilen 19–21): Durch den direkten Aufruf von `move_uploaded_file()` wird FAL umgangen, sodass weder `fileDenyPattern`, MIME-Type-Prüfungen, Storage-Berechtigungen noch Dateinamenbereinigung greifen und ausführbare Dateien im öffentlich erreichbaren Verzeichnis `fileadmin/user_upload/` abgelegt werden können."
+      },
+      {
+        "id": 3,
+        "verdict": "CONCERN",
+        "reason": "In `Secure/Classes/Service/AttachmentUploadService.php` (Zeile 34) wird `$storage->addFile()` statt `$storage->addUploadedFile()` verwendet, wodurch keine Upload-Verifikation per `is_uploaded_file()`/`move_uploaded_file()` erfolgt und zudem ohne Übergabe von `DuplicationBehavior::CANCEL` niemals die in Zeile 35 abgefangene `ExistingTargetFileNameException` geworfen wird (Standard ist `RENAME`, während `Vulnerable` in Zeile 21 bestehende Dateien überschreibt). Darüber hinaus gibt Zeile 39 `$file->getIdentifier()` (z. B. `/user_upload/...` ohne Storage-Präfix) zurück, während `Vulnerable/Classes/Service/AttachmentUploadService.php` (Zeilen 19, 23) den relativen Pfad inklusive `fileadmin/user_upload/` liefert."
+      },
+      {
+        "id": 4,
+        "verdict": "PASS",
+        "reason": "Das Feld `origin` in `case.json` deklariert das Fixture-Paar mit `kind: \"RULE_CONTRACT\"` und `causal_fidelity: \"VULNERABILITY_CLASS\"` korrekt als Regelvertrag zu `CLAUDE.md section 6 (TCA & File Upload Security)`. Das Feld `origin.note` stellt transparent klar, dass kein Advisory zugeordnet ist, und behauptet damit nicht mehr, als die Quelle stützt."
+      },
+      {
+        "id": 5,
+        "verdict": "PASS",
+        "reason": "Das Feld `expected_identifier` (`typo3Security.insecureFileUpload`) und das Feld `rule` (`Security\\TYPO3\\Rules\\InsecureFileOperationRule`) in `case.json` stimmen exakt mit `typo3-security-suite/rules/InsecureFileOperationRule.php` (Zeilen 16, 34–38) überein, wo direkte Aufrufe von `move_uploaded_file()` mit `SecurityRuleIdentifier::INSECURE_FILE_UPLOAD` gemeldet werden."
+      }
+    ],
+    "summary": "Ein menschlicher Reviewer sollte zuerst `Secure/Classes/Service/AttachmentUploadService.php` (Zeilen 34–39) prüfen, da dort `$storage->addFile()` statt `$storage->addUploadedFile()` ohne passenden `DuplicationBehavior`-Modus verwendet wird und `$file->getIdentifier()` einen anderen Pfad als `Vulnerable/Classes/Service/AttachmentUploadService.php` (Zeile 23) zurückgibt."
+  }
 }
