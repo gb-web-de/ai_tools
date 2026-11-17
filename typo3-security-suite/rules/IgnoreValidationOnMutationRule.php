@@ -43,7 +43,13 @@ class IgnoreValidationOnMutationRule implements Rule
             ];
         }
 
-        foreach ($node->attrGroups as $attrGroup) {
+        $attrGroups = $node->attrGroups;
+        // TYPO3 v14 puts the attribute on the parameter: updateAction(#[IgnoreValidation] Entry $entry).
+        foreach ($node->params as $param) {
+            $attrGroups = [...$attrGroups, ...$param->attrGroups];
+        }
+
+        foreach ($attrGroups as $attrGroup) {
             foreach ($attrGroup->attrs as $attr) {
                 $attributeName = $attr->name->toString();
                 if (str_contains($attributeName, 'IgnoreValidation')) {

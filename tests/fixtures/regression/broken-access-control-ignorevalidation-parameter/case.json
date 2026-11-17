@@ -1,0 +1,22 @@
+{
+  "slug": "broken-access-control-ignorevalidation-parameter",
+  "title": "Broken access control in a mutating Extbase action with IgnoreValidation on the parameter (TYPO3 v14 form)",
+  "finding_type": "BROKEN_ACCESS_CONTROL",
+  "severity": "HIGH",
+  "expected_identifier": "typo3Security.brokenAccessControl",
+  "rule": "Security\\TYPO3\\Rules\\IgnoreValidationOnMutationRule",
+  "root_cause": "updateAction() puts #[IgnoreValidation] on the DirectoryEntry parameter it persists, the parameter form that TYPO3 v14 recommends instead of the deprecated argument-name form on the method. Extbase then skips the model's validators for this argument, so an entry whose title violates NotEmpty is persisted, and the action updates the entry without checking that it belongs to the logged-in frontend user.",
+  "vulnerable_path": "Vulnerable/Classes/Controller/DirectoryEntryController.php",
+  "secure_path": "Secure/Classes/Controller/DirectoryEntryController.php",
+  "origin": {
+    "kind": "RULE_CONTRACT",
+    "reference": "CLAUDE.md section 3 (Broken Access Control & Mass Assignment (Extbase)); typo3/cms-extbase v14 Classes/Attribute/IgnoreValidation.php, whose deprecation notice for the argument name says to place the attribute on the method parameter",
+    "causal_fidelity": "VULNERABILITY_CLASS",
+    "note": "Not tied to a published advisory. The pair documents the parameter form of #[IgnoreValidation] as part of the contract of IgnoreValidationOnMutationRule; the method-level form is covered by broken-access-control-ignorevalidation."
+  },
+  "review": {
+    "status": "PENDING",
+    "reviewed_by": null,
+    "reviewed_at": null
+  }
+}
