@@ -101,3 +101,40 @@ test('MCP scans JavaScript and TypoScript of an extension', async (t) => {
 
   assert.equal((await client.callTool({ name: 'scan_frontend_assets', arguments: { targetPath: path.join(directory, 'nope') } })).isError, true);
 });
+
+test('MCP PHPStan audit reruns without the project autoload when that autoload aborts PHPStan', async (t) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'typo3-mcp-phpstan-'));
+  const client = new Client({ name: 'phpstan-autoload-integration', version: '1.0.0' });
+  t.after(async () => { await client.close(); fs.rmSync(directory, { recursive: true, force: true }); });
+
+  // A Composer project: vendor/autoload.php sits above the extension, where the server looks for it.
+  const extension = path.join(directory, 'packages/demo');
+  const autoload = path.join(directory, 'vendor/autoload.php');
+  fs.mkdirSync(path.join(directory, 'vendor'), { recursive: true });
+  fs.mkdirSync(path.join(extension, 'Classes'), { recursive: true });
+  fs.writeFileSync(path.join(extension, 'Classes/Repository.php'),
+    "<?php\ndeclare(strict_types=1);\nnamespace Demo;\nuse TYPO3\\CMS\\Core\\Database\\Query\\QueryBuilder;\n"
+    + "final class Repository extends Base\n{\n    public function find(QueryBuilder $queryBuilder, int $pid): void\n    {\n        $queryBuilder->where('pid = ' . $pid);\n    }\n}\n");
+
+  await client.connect(new StdioClientTransport({ command: process.execPath,
+    args: [fileURLToPath(new URL('../typo3-mcp-server/build/index.js', import.meta.url))],
+    env: { ...process.env, TYPO3_KNOWLEDGE_PATH: directory }, stderr: 'pipe',
+  }));
+  const findingsOf = async (name, arguments_) => {
+    const result = await client.callTool({ name, arguments: arguments_ });
+    assert.notEqual(result.isError, true, result.content[0].text);
+    const parsed = JSON.parse(result.content[0].text);
+    return (parsed.phpstanResults ?? parsed).findings;
+  };
+
+  // A working autoload is still handed to PHPStan: it knows Demo\Base through it, so only the real finding is left.
+  fs.writeFileSync(autoload, '<?php\nnamespace Demo { abstract class Base {} }\n');
+  assert.deepEqual((await findingsOf('run_phpstan_security_audit', { targetPath: extension })).map((finding) => finding.type), ['SQL_INJECTION']);
+
+  // The autoload of a TYPO3 project aborts PHPStan because typo3/class-alias-loader gets registered twice.
+  // Both tools still have to deliver the security finding instead of the error text.
+  fs.writeFileSync(autoload, "<?php\nthrow new RuntimeException('Cannot set the alias loader, as it is already registered!');\n");
+  for (const [name, arguments_] of [['run_phpstan_security_audit', { targetPath: extension }], ['analyze_typo3_extension', { extensionPath: extension }]]) {
+    assert.ok((await findingsOf(name, arguments_)).some((finding) => finding.type === 'SQL_INJECTION'), name);
+  }
+});
