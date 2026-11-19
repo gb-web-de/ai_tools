@@ -102,6 +102,6 @@ Writes `CLAUDE.md`, `.cursorrules`, `AGENTS.md` and MCP configurations into the 
 
 ## Limits
 
-- `run_phpstan_security_audit` and `analyze_typo3_extension` (MCP) pass the project's autoload file and therefore fail on Composer-based TYPO3 projects; until that is fixed, use the direct call from section 4.
+- `run_phpstan_security_audit` and `analyze_typo3_extension` (MCP) pass PHPStan the autoload file of the project. If PHPStan aborts with it, as it does on TYPO3 projects because the class alias loader gets registered twice, both tools run a second time without that file. PHPStan then knows only the TYPO3 core: classes from third-party extensions and the rest of the project are unknown, and the answer contains many `STATIC_ANALYSIS` entries that are not security findings (for example "unknown class"). Security findings are the entries whose message starts with `SECURITY`; the type does not tell them apart. The direct call from section 4 shows only the security rules and is easier to read.
 - Without trivy or grype there is no CVE scan of the system packages in the images.
 - The scanners find patterns, not logic flaws such as missing token or ownership checks.

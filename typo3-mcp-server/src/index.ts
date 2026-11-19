@@ -507,18 +507,28 @@ class Typo3SecurityMcpServer {
       ? ` --autoload-file="${targetAutoload}"`
       : "";
 
-    let output = "";
-    try {
-      output = execSync(
-        `"${phpstanBin}" analyse -c "${phpstanNeon}" --error-format=json --no-progress${autoloadFlag} "${resolvedTarget}"`,
-        {
-          cwd: this.suitePath,
-          encoding: "utf8",
-          maxBuffer: 10 * 1024 * 1024
-        }
-      );
-    } catch (e: any) {
-      output = e.stdout ? e.stdout.toString() : e.message;
+    const runPhpstan = (flag: string): string => {
+      try {
+        return execSync(
+          `"${phpstanBin}" analyse -c "${phpstanNeon}" --error-format=json --no-progress${flag} "${resolvedTarget}"`,
+          {
+            cwd: this.suitePath,
+            encoding: "utf8",
+            maxBuffer: 10 * 1024 * 1024
+          }
+        );
+      } catch (e: any) {
+        return e.stdout ? e.stdout.toString() : e.message;
+      }
+    };
+
+    let output = runPhpstan(autoloadFlag);
+    // Ohne JSON ist PHPStan abgebrochen. Mit der Autoload-Datei eines TYPO3-Projekts
+    // passiert das, weil typo3/class-alias-loader dort ein zweites Mal registriert wird
+    // ("Cannot set the alias loader, as it is already registered!"). Die Sicherheitsregeln
+    // brauchen die Datei nicht (siehe findTargetAutoload), also einmal ohne wiederholen.
+    if (autoloadFlag && !output.trimStart().startsWith("{")) {
+      output = runPhpstan("");
     }
 
     let parsedResult = null;
